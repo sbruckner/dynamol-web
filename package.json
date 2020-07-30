@@ -7,9 +7,16 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "@luma.gl/core": "^8.2.0",
+    "@luma.gl/engine": "^8.2.0",
+    "@luma.gl/webgl": "^8.2.0",
+    "http": "0.0.1-security",
+    "line-by-line": "^0.1.6",
+    "ts-shader-loader": "^1.0.6",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
-    "vue-property-decorator": "^8.4.2"
+    "vue-property-decorator": "^8.4.2",
+    "vue-sidebar-menu": "^4.6.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-typescript": "~4.4.0",
