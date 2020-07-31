@@ -65,7 +65,7 @@ export class Protein {
         return new Promise(function(resolve, reject) {
             const options = {
                 host: 'files.rcsb.org',
-                path: '/download/4FYW.pdb',
+                path: '/download/1CWP.pdb',
                 method: 'GET',
             };
             

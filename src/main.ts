@@ -1,16 +1,12 @@
 import Vue from 'vue'
 import App from './App.vue'
 import { Viewer } from "./Viewer"
-
-import VueSidebarMenu from 'vue-sidebar-menu'
-import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
-
-Vue.use(VueSidebarMenu)
-
-Vue.config.productionTip = false
+import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 new Vue({
+  vuetify,
   render: h => h(App),
 }).$mount('#app')
 
 const viewer = new Viewer(document.getElementById("canvas") as HTMLCanvasElement);
+
