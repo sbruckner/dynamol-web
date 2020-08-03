@@ -227,7 +227,7 @@ export class SphereRenderer {
             gl.bufferData(gl.SHADER_STORAGE_BUFFER, this.viewportSize[0]*this.viewportSize[1]*4+4,gl.DYNAMIC_DRAW);
         }
 
-        const shaderDefines = {};
+        const shaderDefines = {COLORING:true};
         this.shadeModel.setProgram({defines:shaderDefines, vs: imageVertexShader, fs: shadeFragmentShader } );
         this.surfaceModel.setProgram({defines:shaderDefines,vs: imageVertexShader, fs: surfaceFragmentShader} );
 
@@ -248,7 +248,9 @@ export class SphereRenderer {
 
         clear(gl, {color: [0, 0, 0, 1]});
 
-        var sharpness = 1.0;
+        var sharpness = this.viewer.settings.state.sharpness;
+        var coloring = this.viewer.settings.state.coloring.value;
+
         var contributingAtoms = 32.0;
         var radiusScale = Math.sqrt(Math.log(contributingAtoms*Math.exp(sharpness)) / sharpness);
 
@@ -326,7 +328,7 @@ export class SphereRenderer {
             positionTexture : this.spherePositionTexture,
             normalTexture : this.sphereNormalTexture,
             sharpness,
-            coloring : 1,
+            coloring,
             environment : false,
             lens : false,            
             lightPosition : [0,0,0],

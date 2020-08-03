@@ -14,13 +14,14 @@ export class Viewer extends AnimationLoop {
 
     private viewTransform;
     private protein;
+    public settings;
 
     
 
-    constructor(canvas) {
+    constructor(canvas,settings) {
         super();
         this.canvas = canvas;
-
+        this.settings = settings;
 
         this.mouse = {
             lastX: 0,
