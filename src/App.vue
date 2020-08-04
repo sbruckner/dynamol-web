@@ -15,13 +15,28 @@
             
             <v-list-item>
               <v-list-item-content>
-                  <v-slider label="Sharpness" thumb-label="true" min="0.5" max="16.0" step="0.1" v-model="state.sharpness" />
-              </v-list-item-content>
-            </v-list-item>
-
-            <v-list-item>
-              <v-list-item-content>
+                <v-item-group>
                   <v-select label="Coloring" v-model="state.coloring.value" item-text="text" item-value="value" :items="state.coloring.items" />
+                  <v-slider label="Sharpness" :min="state.sharpness.min" :max="state.sharpness.max" :step="state.sharpness.step" v-model="state.sharpness.value" />
+                  <AppColorPicker label="Background" v-model="state.backgroundColor.value"></AppColorPicker>
+<!--                  <label>
+                  Background Color
+                  <input name="backgroundColor" type="color" v-model="state.backgroundColor.value" />
+                  </label>
+-->
+<!--
+                  <v-menu offset-y>
+                    <template v-slot:activator="{ on }">
+                      <v-btn :color="state.backgroundColor.value.toString()" dark v-on="on">
+                        Event Color
+                      </v-btn>
+                    </template>
+                    <v-color-picker v-model="state.backgroundColor.value" />
+                  </v-menu>
+-->
+
+
+                </v-item-group>
               </v-list-item-content>
             </v-list-item>
 
@@ -46,9 +61,9 @@
   </v-app>
 </template>
 
-<script>
+<script lang="ts">
   import { Settings } from "./Settings";
-
+  
   export default {
     props: {
       source: String,

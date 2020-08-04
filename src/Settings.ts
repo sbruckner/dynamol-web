@@ -1,6 +1,11 @@
 export const Settings = {
     state: {
-      sharpness: 0.5,
+      sharpness : { 
+        value : 1.0,
+        min: 0.5,
+        max: 16.0,
+        step: 0.1
+      },
       coloring : {
         value : 0,
         items :  [
@@ -21,6 +26,11 @@ export const Settings = {
             value: 3
           }
         ]
+      },
+      backgroundColor : {
+        value: {
+          r:0, g:0, b:255, a:255
+        }
       }
-    }
+    },
   };

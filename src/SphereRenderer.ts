@@ -248,8 +248,10 @@ export class SphereRenderer {
 
         clear(gl, {color: [0, 0, 0, 1]});
 
-        var sharpness = this.viewer.settings.state.sharpness;
+        var sharpness = this.viewer.settings.state.sharpness.value;
         var coloring = this.viewer.settings.state.coloring.value;
+        var bg = this.viewer.settings.state.backgroundColor.value;
+        var backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
 
         var contributingAtoms = 32.0;
         var radiusScale = Math.sqrt(Math.log(contributingAtoms*Math.exp(sharpness)) / sharpness);
@@ -374,7 +376,7 @@ export class SphereRenderer {
             ambientMaterial : [0.1,0.1,0.1],
             specularMaterial : [0.5,0.5,0.5],
             shininess : 32,
-            backgroundColor : [0,0,0]
+            backgroundColor
         });
         
         gl.depthMask(true);
