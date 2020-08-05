@@ -1,7 +1,4 @@
-///<reference path="../node_modules/@types/node/index.d.ts"/>
-import * as LineByLineReader from 'line-by-line';
-import * as http from 'http';
-
+import fetch from 'node-fetch';
 
 var int8 = new Int8Array(4);
 var int32 = new Int32Array(int8.buffer, 0, 1);
@@ -28,6 +25,37 @@ function floatBitsToUint(f) {
 	return uint32[0];
 }
 
+async function* makeTextFileLineIterator(fileURL) {
+    const utf8Decoder = new TextDecoder("utf-8");
+    let response = await fetch(fileURL);
+    let reader = response.body.getReader();
+    let {value: chunk, done: readerDone} = await reader.read();
+    chunk = chunk ? utf8Decoder.decode(chunk) : "";
+  
+    let re = /\r\n|\n|\r/gm;
+    let startIndex = 0;
+  
+    for (;;) {
+      let result = re.exec(chunk);
+      if (!result) {
+        if (readerDone) {
+          break;
+        }
+        let remainder = chunk.substr(startIndex);
+        ({value: chunk, done: readerDone} = await reader.read());
+        chunk = remainder + (chunk ? utf8Decoder.decode(chunk) : "");
+        startIndex = re.lastIndex = 0;
+        continue;
+      }
+      yield chunk.substring(startIndex, result.index);
+      startIndex = re.lastIndex;
+    }
+    if (startIndex < chunk.length) {
+      // last line didn't end in a newline char
+      yield chunk.substr(startIndex);
+    }
+}  
+
 export class Protein {
     public atomPositions : Float32Array;
     public atomCount : number;
@@ -47,7 +75,10 @@ export class Protein {
         this.maximumBounds = [-Number.MAX_VALUE,-Number.MAX_VALUE,-Number.MAX_VALUE];
     }
 
-    load() {
+    
+
+    async load() {
+
         const that = this;
         let atomPositions = [];
         let atomAttributes = [];
@@ -60,21 +91,94 @@ export class Protein {
         let activeResidueIds = [0];
         let activeChainIds = [0];
     
-        let elementCount = 1;        
+        let elementCount = 1;              
 
-        return new Promise(function(resolve, reject) {
-            const options = {
-                host: 'files.rcsb.org',
-                path: '/download/1CWP.pdb',
-                method: 'GET',
-            };
-            
-            const request = http.request(options, (result) => { 
+        for await (let str of makeTextFileLineIterator("http://files.rcsb.org/download/4fyw.pdb")) {
+
+            console.log(str);
+
+            const recordName = str.substr(0,6).trim();
+
+            if (recordName == "END") {
+            }
+            else if (recordName == "ATOM" || recordName == "HETATM") {
+                const x = parseFloat(str.substr(30,8).trim());
+                const y = parseFloat(str.substr(38,8).trim());
+                const z = parseFloat(str.substr(46,8).trim());
+
+                const residueName = str.substr(17, 3).trim();
+                const chainName = str.substr(21, 1).trim();
+                const elementName = str.substr(76, 2).trim();
+
+                let elementId = 0;
+                let residueId = 0;
+                let chainId = 0;
+                
+                if (elementName in elementIds)
+                {
+                    elementId = elementIds[elementName];
+                }
+
+                if (residueName in residueIds)
+                {
+                    residueId = residueIds[residueName];
+                }
+    
+                if (chainName in chainIds)
+                {
+                    chainId = chainIds[chainName];
+                }
+
+                that.minimumBounds[0] = Math.min(that.minimumBounds[0],x);
+                that.minimumBounds[1] = Math.min(that.minimumBounds[1],y);
+                that.minimumBounds[2] = Math.min(that.minimumBounds[2],z);
+
+                that.maximumBounds[0] = Math.max(that.maximumBounds[0],x);
+                that.maximumBounds[1] = Math.max(that.maximumBounds[1],y);
+                that.maximumBounds[2] = Math.max(that.maximumBounds[2],z);
+
+                const atomAttributes = elementId | (residueId << 8) | (chainId << 16); 
+                atomPositions.push(x,y,z,uintBitsToFloat(atomAttributes));
+            }
+        
+        }
+        
+        that.atomCount = atomPositions.length / 4;
+        that.atomPositions = new Float32Array(atomPositions);            
+
+        return true;
+            //const request = http.get("http://files.rcsb.org/download/4FYW.pdb")..pipe();, (result) => { 
+
+//        const decoder = new TextDecoder('utf-8');
+/*
+        fetch("http://files.rcsb.org/download/4FYW.pdb")
+            .then(response => response.body)
+            .then(body => {
+                var reader = body.getReader();
+
+                reader.read().then(({ done, value }) => {
+                    console.log(decoder.decode(value));
+*/
+                    // When no more data needs to be consumed, close the stream
+//                    if (done) {
+//                        return;
+//                    }
+                    // Enqueue the next data chunk into our target stream
+//                    controller.enqueue(value);
+//                    return pump();
+//                  });
+/*
+                var stream = byline(body);
+
+                stream.on('data', function(line) {
+                    console.log(line);
+                  });    //                    console.log(result.data);*/
+                  
     //            req.setEncoding('utf8');
             
     //          const LineByLineReader = require('line-by-line')
-                var lineReader = new LineByLineReader(result);
-                
+//                var lineReader = new LineByLineReader(reader);
+/*                
                 
                 lineReader.on('error', function (error) {
                     console.log('err', error);
@@ -115,7 +219,7 @@ export class Protein {
                         {
                             chainId = chainIds[chainName];
                         }
-
+*/
 /*            
                         let elementIndex = 0;
                         let residueIndex = 0;
@@ -139,7 +243,7 @@ export class Protein {
                             chainIdMap[chainId] = chainIndex;
                         }                        
 */            
-             
+/*             
                         that.minimumBounds[0] = Math.min(that.minimumBounds[0],x);
                         that.minimumBounds[1] = Math.min(that.minimumBounds[1],y);
                         that.minimumBounds[2] = Math.min(that.minimumBounds[2],z);
@@ -158,6 +262,7 @@ export class Protein {
 
                     that.atomCount = atomPositions.length / 4;
                     that.atomPositions = new Float32Array(atomPositions);
+*/                    
 /*
                     that.activeElementRadii = new Float32Array(activeElementIds.length);
                     that.activeElementColors = new Uint8Array(activeElementIds.length*3);
@@ -192,18 +297,18 @@ export class Protein {
                         that.activeChainColors[i*3+2] = chainColors[activeChainIds[i]][2];
                     }                    
 */
-                    resolve();
-                });
+//                    resolve();
+//                });
             
-            });
-
+//            });
+/*
             request.on('error', (e) => {
                 console.log('problem with request', e);
                 request.abort();
             });
         
-            request.end();
-        });
+            request.end();*/
+//        });
     }
 
 }

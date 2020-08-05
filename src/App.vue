@@ -51,6 +51,15 @@
     >
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Application</v-toolbar-title>
+      
+      <v-progress-linear
+        :active="true"
+        :indeterminate="true"
+        absolute
+        bottom
+        color="deep-purple accent-4"
+      ></v-progress-linear>
+
     </v-app-bar>
 
     <canvas app id="canvas" touch-action="none"></canvas>
@@ -73,7 +82,7 @@
       state: Settings.state
     }),
     created () {
-      this.$vuetify.theme.dark = true
+//      this.$vuetify.theme.dark = true
     },
   }
 </script>

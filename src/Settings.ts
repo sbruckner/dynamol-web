@@ -29,7 +29,7 @@ export const Settings = {
       },
       backgroundColor : {
         value: {
-          r:0, g:0, b:255, a:255
+          r:0, g:0, b:255, a:1.0
         }
       }
     },
