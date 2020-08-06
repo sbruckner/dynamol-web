@@ -248,13 +248,15 @@ export class SphereRenderer {
 
         clear(gl, {color: [0, 0, 0, 1]});
 
-        var sharpness = this.viewer.settings.state.sharpness.value;
-        var coloring = this.viewer.settings.state.coloring.value;
-        var bg = this.viewer.settings.state.backgroundColor.value;
-        var backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
+        const settings = this.viewer.environment.settings;
 
-        var contributingAtoms = 32.0;
-        var radiusScale = Math.sqrt(Math.log(contributingAtoms*Math.exp(sharpness)) / sharpness);
+        const sharpness = settings.sharpness.value;
+        const coloring = settings.coloring.value;
+        const bg = settings.backgroundColor.value;
+        const backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
+
+        const contributingAtoms = 32.0;
+        const radiusScale = Math.sqrt(Math.log(contributingAtoms*Math.exp(sharpness)) / sharpness);
 
         this.clearModel.setUniforms({
             viewportSize : this.viewer.viewportSize()

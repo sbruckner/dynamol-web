@@ -1,5 +1,5 @@
-export const Settings = {
-    state: {
+export const Environment = {
+    settings: {
       sharpness : { 
         value : 1.0,
         min: 0.5,
@@ -31,6 +31,9 @@ export const Settings = {
         value: {
           r:0, g:0, b:255, a:1.0
         }
-      }
+      },
     },
+    state : {
+      loading: false
+    }
   };

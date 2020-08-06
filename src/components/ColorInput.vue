@@ -17,7 +17,7 @@
 
 <script>
 export default {
-  name: "AppColorPicker",
+  name: "ColorInput",
   props: ['value','label'],
 	data() {
     return {

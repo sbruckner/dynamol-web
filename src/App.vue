@@ -16,9 +16,9 @@
             <v-list-item>
               <v-list-item-content>
                 <v-item-group>
-                  <v-select label="Coloring" v-model="state.coloring.value" item-text="text" item-value="value" :items="state.coloring.items" />
-                  <v-slider label="Sharpness" :min="state.sharpness.min" :max="state.sharpness.max" :step="state.sharpness.step" v-model="state.sharpness.value" />
-                  <AppColorPicker label="Background" v-model="state.backgroundColor.value"></AppColorPicker>
+                  <v-select label="Coloring" v-model="settings.coloring.value" item-text="text" item-value="value" :items="settings.coloring.items" />
+                  <v-slider label="Sharpness" :min="settings.sharpness.min" :max="settings.sharpness.max" :step="settings.sharpness.step" v-model="settings.sharpness.value" />
+                  <color-input label="Background" v-model="settings.backgroundColor.value" />
 <!--                  <label>
                   Background Color
                   <input name="backgroundColor" type="color" v-model="state.backgroundColor.value" />
@@ -51,10 +51,21 @@
     >
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Application</v-toolbar-title>
-      
+       <v-spacer />
+      <v-autocomplete
+        item-text="Description"
+        item-value="API"
+        label="Search PDB"
+        placeholder="Start typing to Search"
+        prepend-icon="mdi-database-search"
+        return-object
+        solo 
+        hide-details single-line
+      ></v-autocomplete>      
+
       <v-progress-linear
-        :active="true"
-        :indeterminate="true"
+        :active="state.loading"
+        :indeterminate="state.loading"
         absolute
         bottom
         color="deep-purple accent-4"
@@ -71,7 +82,7 @@
 </template>
 
 <script lang="ts">
-  import { Settings } from "./Settings";
+  import { Environment } from './Environment';
   
   export default {
     props: {
@@ -79,7 +90,8 @@
     },
     data: () => ({
       drawer: null,
-      state: Settings.state
+      settings: Environment.settings,
+      state : Environment.state
     }),
     created () {
 //      this.$vuetify.theme.dark = true

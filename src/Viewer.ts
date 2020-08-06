@@ -14,14 +14,14 @@ export class Viewer extends AnimationLoop {
 
     private viewTransform;
     private protein;
-    public settings;
+    public environment;
 
     
 
-    constructor(canvas,settings) {
+    constructor(canvas,environment) {
         super();
         this.canvas = canvas;
-        this.settings = settings;
+        this.environment = environment;
 
         this.mouse = {
             lastX: 0,
@@ -168,19 +168,19 @@ export class Viewer extends AnimationLoop {
         });
     
         canvas.addEventListener('mousedown', e => {
-          var rect = this.canvas.getBoundingClientRect();
+          let rect = this.canvas.getBoundingClientRect();
           pointerDown(e.clientX - rect.left, e.clientY - rect.top,e.button);    
           e.preventDefault();
         });
     
         window.addEventListener('mouseup', e => {
-          var rect = this.canvas.getBoundingClientRect();
+          let rect = this.canvas.getBoundingClientRect();
           pointerUp(e.clientX - rect.left, e.clientY - rect.top,e.button);    
           e.preventDefault();
         });
     
         window.addEventListener('mousemove', e => {
-          var rect = this.canvas.getBoundingClientRect();
+          let rect = this.canvas.getBoundingClientRect();
           pointerMove(e.clientX - rect.left, e.clientY - rect.top,);
           e.preventDefault();
         });
@@ -209,7 +209,7 @@ export class Viewer extends AnimationLoop {
 
     arcballVector(x, y) {
       const viewportSize = this.viewportSize();
-      let p = new Vector3(2.0*x / viewportSize[0] -1.0, -2.0*y / viewportSize[1] +1.0, 0.0);
+      const p = new Vector3(2.0*x / viewportSize[0] -1.0, -2.0*y / viewportSize[1] +1.0, 0.0);
     
       const length2 = p[0]*p[0] + p[1]*p[1];
     
@@ -239,8 +239,10 @@ export class Viewer extends AnimationLoop {
         const sphereRenderer = new SphereRenderer(gl,this)
         this.renderers = [sphereRenderer];
 
+        this.environment.state.loading = true;
         this.protein.load().then(() => {
           console.log("done loading");
+          this.environment.state.loading = false;
           sphereRenderer.update({gl});
         });
 
