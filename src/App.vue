@@ -50,24 +50,23 @@
       clipped-left
     >
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title>Application</v-toolbar-title>
+      <v-toolbar-title>dynamol-web</v-toolbar-title>
        <v-spacer />
       <v-autocomplete
-        v-model="model"
-        :items="items"
-        :loading="isLoading"
-        :search-input.sync="search"
+        v-model="pdbModel"
+        :items="pdbItems"
+        :loading="pdbLoading"
         hide-no-data
         hide-selected
-        item-text="identifier"
-        item-value="identifier"
-        label="Public APIs"
-        placeholder="Start typing to Search"
+        label="PDB ID"
+        placeholder="Start typing to search for matching PDB IDs"
         prepend-icon="mdi-database-search"
         return-object
+        cache-items
         solo 
         hide-details
         single-line
+        spellcheck="false"
         @change="onPDBIdChange"
       ></v-autocomplete>     
 
@@ -100,48 +99,25 @@
       drawer: null,
       settings: Environment.settings,
       data : Environment.data,
-      descriptionLimit: 60,
-      entries: [],
-      isLoading: false,
-      model: null,
-      search: null,      
+      pdbModel: null,
+      pdbItems: [],
+      pdbLoading : false
     }),
     created () {
-//      this.$vuetify.theme.dark = true
         const url = "https://data.rcsb.org/rest/v1/holdings/current/entry_ids";
-//        this.data.url = "test";
+        let self = this;
+        self.pdbLoading = true;
 
-        // Lazily load input items
         fetch(url)
           .then(res => res.json())
           .then(res => {
             console.log(res);
-            this.count = res;
-            this.entries = res;
+            self.pdbItems = res;
           })
           .catch(err => {
             console.log(err)
-          });
-    },
-    computed: {
-      fields () {
-        if (!this.model)
-          return [];
-
-        return Object.keys(this.model).map(key => {
-          return {
-            key,
-            value: this.model[key] || 'n/a',
-          }
-        });
-      },
-      items () {
-        return this.entries;//this.entries.map(entry => {
-          //const text = entry.identifier;
-
-//          return entry;
-  //      });
-      },
+          })
+          .finally(() => (self.pdbLoading = false));
     },
     methods: {
       onPDBIdChange(value) {
@@ -151,49 +127,6 @@
           this.data.url = newUrl;        
       }
     }
-    /*
-    watch: {
-      search (val) {
-        // Items have already been loaded
-        if (this.items.length > 0)
-          return;
-
-        // Items have already been requested
-        if (this.isLoading)
-          return;
-
-        this.isLoading = true;
-
-        const query = {
-          "query": {
-            "type": "terminal",
-            "service": "text",
-            "parameters": {
-              "attribute": "rcsb_id",
-              "operator": "exact_match",
-              "value": val
-            }       
-          },
-          "return_type": "entry"
-        };
-
-        //const url = encodeURI('https://search.rcsb.org/rcsbsearch/v1/query?json='+JSON.stringify(query));
-        const url = "https://data.rcsb.org/rest/v1/holdings/current/entry_ids";
-
-        // Lazily load input items
-        fetch(url)
-          .then(res => res.json())
-          .then(res => {
-            console.log(res);
-            this.count = res;
-            this.entries = res;
-          })
-          .catch(err => {
-            console.log(err)
-          })
-          .finally(() => (this.isLoading = false));
-      },
-    }   */ 
   }
 </script>
 
