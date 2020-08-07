@@ -1,3 +1,5 @@
+import { Protein } from './Protein';
+
 export const Environment = {
     settings: {
       sharpness : { 
@@ -33,7 +35,27 @@ export const Environment = {
         }
       },
     },
-    state : {
-      loading: false
+    data : {
+      loading : false,
+      ready : false,
+      version : 0,
+      protein: new Protein(),
+      _url : "",
+      get url() {
+        return this._url;
+      },
+      set url(newUrl){
+        if (newUrl != this._url)
+        {
+          this._url = newUrl;
+          this.loading = true;
+          this.protein.load(newUrl).then(() => {
+            console.log("done loading");
+            this.version++;
+            this.loading = false;
+            this.ready = true;
+          });
+        }
+      }
     }
   };

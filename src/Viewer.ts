@@ -2,8 +2,6 @@ import {AnimationLoop} from '@luma.gl/engine';
 import {instrumentGLContext} from '@luma.gl/gltools';
 import {setParameters} from '@luma.gl/gltools';
 import {Vector2, Vector3, Matrix4, radians} from 'math.gl';
-
-import {Protein} from './Protein';
 import {SphereRenderer} from './SphereRenderer';
 
 export class Viewer extends AnimationLoop {
@@ -13,10 +11,7 @@ export class Viewer extends AnimationLoop {
     private renderers;
 
     private viewTransform;
-    private protein;
-    public environment;
-
-    
+    public environment;    
 
     constructor(canvas,environment) {
         super();
@@ -33,8 +28,6 @@ export class Viewer extends AnimationLoop {
         this.viewTransform.lookAt([0,0,-this.distance],[0,0,0],[0,1,0]);
 
         this.initalizeEventHandling(canvas);
-        this.protein = new Protein();
-
         
         super.start();
     }
@@ -54,9 +47,9 @@ export class Viewer extends AnimationLoop {
 
     modelTransform() {
 
-      const boundingBoxSize = new Vector3(this.protein.maximumBounds).subtract(this.protein.minimumBounds);
+      const boundingBoxSize = new Vector3(this.environment.data.protein.maximumBounds).subtract(this.environment.data.protein.minimumBounds);
       const maximumSize = Math.max(boundingBoxSize.x,boundingBoxSize.y,boundingBoxSize.z);
-      return new Matrix4().scale(2.0 / maximumSize).translate(new Vector3(this.protein.minimumBounds).add(this.protein.maximumBounds).scale(-0.5)); 
+      return new Matrix4().scale(2.0 / maximumSize).translate(new Vector3(this.environment.data.protein.minimumBounds).add(this.environment.data.protein.maximumBounds).scale(-0.5)); 
     }
 
     modelViewTransform() {
@@ -238,14 +231,6 @@ export class Viewer extends AnimationLoop {
 
         const sphereRenderer = new SphereRenderer(gl,this)
         this.renderers = [sphereRenderer];
-
-        this.environment.state.loading = true;
-        this.protein.load().then(() => {
-          console.log("done loading");
-          this.environment.state.loading = false;
-          sphereRenderer.update({gl});
-        });
-
     }
     
     onRender({gl}) {

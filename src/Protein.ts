@@ -77,9 +77,14 @@ export class Protein {
 
     
 
-    async load() {
+    async load(url) {
 
         const that = this;
+
+        this.atomCount = 0;
+        this.minimumBounds = [Number.MAX_VALUE,Number.MAX_VALUE,Number.MAX_VALUE];
+        this.maximumBounds = [-Number.MAX_VALUE,-Number.MAX_VALUE,-Number.MAX_VALUE];
+
         let atomPositions = [];
         let atomAttributes = [];
         
@@ -93,7 +98,7 @@ export class Protein {
     
         let elementCount = 1;              
 
-        for await (let str of makeTextFileLineIterator("http://files.rcsb.org/download/4fyw.pdb")) {
+        for await (let str of makeTextFileLineIterator(url)) {
 
             console.log(str);
 
@@ -143,8 +148,8 @@ export class Protein {
         
         }
         
-        that.atomCount = atomPositions.length / 4;
-        that.atomPositions = new Float32Array(atomPositions);            
+        this.atomCount = atomPositions.length / 4;
+        this.atomPositions = new Float32Array(atomPositions);            
 
         return true;
             //const request = http.get("http://files.rcsb.org/download/4FYW.pdb")..pipe();, (result) => { 

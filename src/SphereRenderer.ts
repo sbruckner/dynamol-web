@@ -61,8 +61,11 @@ export class SphereRenderer {
     private surfaceModel;
     private shadeModel;
 
+    private version;
+
     constructor(gl, viewer) {
         this.viewer = viewer;
+        this.version = viewer.environment.data.version;
         this.viewportSize = viewer.viewportSize();
 
         this.offsetBuffer = gl.createBuffer();
@@ -169,7 +172,7 @@ export class SphereRenderer {
             fs: sphereFragmentShader,
             attributes: {positions: this.positionBuffer},
             drawMode: gl.POINTS,
-            vertexCount: this.viewer.protein.atomCount
+            vertexCount: this.viewer.environment.data.protein.atomCount
          });
 
         this.spawnModel = new Model(gl,{
@@ -179,7 +182,7 @@ export class SphereRenderer {
             fs: spawnFragmentShader,
             attributes: {positions: this.positionBuffer},
             drawMode: gl.POINTS,
-            vertexCount: this.viewer.protein.atomCount
+            vertexCount: this.viewer.environment.data.protein.atomCount
         });        
 
         this.surfaceModel = new Model(gl,{
@@ -211,8 +214,16 @@ export class SphereRenderer {
         });           
     }
 
-    display({gl}) {   
-        if (this.viewer.protein.atomCount == 0)
+    display({gl}) {
+        if (!this.viewer.environment.data.ready)
+            return;
+        
+        if (this.version != this.viewer.environment.data.version) {
+            this.update(gl);
+            this.version = this.viewer.environment.data.version;
+        }
+
+        if (this.viewer.environment.data.protein.atomCount == 0)
             return;
 
         if (!new Vector2(this.viewportSize).equals(new Vector2(this.viewer.viewportSize()))) {
@@ -398,13 +409,13 @@ export class SphereRenderer {
     }
 
     update({gl}) {
-        this.positionBuffer.setData({data:this.viewer.protein.atomPositions});
-        this.sphereModel.vertexCount = this.viewer.protein.atomCount;
-        this.spawnModel.vertexCount = this.viewer.protein.atomCount;
+        this.positionBuffer.setData({data:this.viewer.environment.data.protein.atomPositions});
+        this.sphereModel.vertexCount = this.viewer.environment.data.protein.atomCount;
+        this.spawnModel.vertexCount = this.viewer.environment.data.protein.atomCount;
 
 //        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this.elementColorsRadiiBuffer);
-//        gl.bufferData(gl.SHADER_STORAGE_BUFFER, this.viewer.protein.activeElementColorsRadiiPacked,gl.DYNAMIC_DRAW);
-//        this.elementColorsRadiiBuffer.setData({data:this.viewer.protein.activeElementColorsRadiiPacked});
+//        gl.bufferData(gl.SHADER_STORAGE_BUFFER, this.viewer.environment.data.protein.activeElementColorsRadiiPacked,gl.DYNAMIC_DRAW);
+//        this.elementColorsRadiiBuffer.setData({data:this.viewer.environment.data.protein.activeElementColorsRadiiPacked});
 //        this.residueColorsBuffer.setData({data:protein.activeResidueColors});
 //        this.chainColorsBuffer.setData({data:protein.activeChainColors});
     }
