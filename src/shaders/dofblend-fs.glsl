@@ -1,25 +1,25 @@
+#version 310 es
+
 // This is an implementation of the depth-of-field method by McGuire.
 // It is based on the source code available at the link below, with only slight adaptations.
 // 
 // Morgan McGuire. The Skylanders SWAP Force Depth-of-Field Shader.
 // http://casual-effects.blogspot.com/2013/09/the-skylanders-swap-force-depth-of.html
 
-#version 310 es
-
 #define saturate(s) clamp( s, 0.0, 1.0 )
 
-layout(pixel_center_integer) in vec4 gl_FragCoord;
+//layout(pixel_center_integer) in vec4 gl_FragCoord;
 
 uniform sampler2D colorTexture;
 uniform sampler2D nearTexture;
 uniform sampler2D blurTexture;
 
-uniform float maximumCoCRadius = 0.0;
-uniform float aparture = 0.0;
-uniform float focalDistance = 0.0;
-uniform float focalLength = 0.0;
+uniform float maximumCoCRadius;
+uniform float aparture;
+uniform float focalDistance;
+uniform float focalLength;
 
-uniform float farRadiusRescale = 1.0;
+uniform float farRadiusRescale;
 out vec4 fragColor;
 
 const vec2 kCocReadScaleBias = vec2(2.0, -1.0);

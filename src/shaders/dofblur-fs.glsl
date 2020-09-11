@@ -1,20 +1,20 @@
+#version 310 es
+
 // This is an implementation of the depth-of-field method by McGuire.
 // It is based on the source code available at the link below, with only slight adaptations.
 // 
 // Morgan McGuire. The Skylanders SWAP Force Depth-of-Field Shader.
 // http://casual-effects.blogspot.com/2013/09/the-skylanders-swap-force-depth-of.html
 
-#version 310 es
-
 #define saturate(s) clamp( s, 0.0, 1.0 )
 
 uniform sampler2D blurTexture;
 uniform sampler2D nearTexture;
 
-uniform float maximumCoCRadius = 0.0;
-uniform float aparture = 0.0;
-uniform float focalDistance = 0.0;
-uniform float focalLength = 0.0;
+uniform float maximumCoCRadius;
+uniform float aparture;
+uniform float focalDistance;
+uniform float focalLength;
 
 uniform int       uMaxCoCRadiusPixels;
 uniform int       uNearBlurRadiusPixels;
@@ -80,7 +80,7 @@ void main(void)
 	//packedA = maximumCoCRadius * aparture * (focalLength * (focalDistance - packedA)) / (packedA * (focalDistance - focalLength));
 	//float r_A = packedA * uMaxCoCRadiusPixels;
 
-	float r_A = (packedA * 2.0 - 1.0) * uMaxCoCRadiusPixels;
+	float r_A = (packedA * 2.0 - 1.0) * float(uMaxCoCRadiusPixels);
 
 	// Map r_A << 0 to 0, r_A >> 0 to 1
 	float nearFieldness_A = saturate(r_A * 4.0);
@@ -138,7 +138,7 @@ void main(void)
 			// Curve the contribution based on the radius.  We tuned this particular
 			// curve to blow out the near field while still providing a reasonable
 			// transition into the focus field.
-			nearInput.a = float(abs(delta) <= r_B) * saturate(r_B * uInvNearBlurRadiusPixels * 4.0);
+			nearInput.a = float(float(abs(delta)) <= r_B) * saturate(r_B * uInvNearBlurRadiusPixels * 4.0);
 
 			// Optionally increase edge fade contrast in the near field
 			nearInput.a *= nearInput.a; nearInput.a *= nearInput.a;

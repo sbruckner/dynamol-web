@@ -2,6 +2,11 @@ import { Protein } from './Protein';
 
 export const Environment = {
     settings: {
+      backgroundColor : {
+        value: {
+          r:0, g:0, b:255, a:1.0
+        }
+      },
       sharpness : { 
         value : 1.0,
         min: 0.5,
@@ -32,10 +37,8 @@ export const Environment = {
       ambientOcclusion : {
         value: false
       },
-      backgroundColor : {
-        value: {
-          r:0, g:0, b:255, a:1.0
-        }
+      depthOfField : {
+        value: false
       },
     },
     data : {

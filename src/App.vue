@@ -16,10 +16,11 @@
             <v-list-item>
               <v-list-item-content>
                 <v-item-group>
-                  <v-select label="Coloring" v-model="settings.coloring.value" item-text="text" item-value="value" :items="settings.coloring.items" />
-                  <v-switch label="Ambient Occlusion" v-model="settings.ambientOcclusion.value" />
-                  <v-slider label="Sharpness" :min="settings.sharpness.min" :max="settings.sharpness.max" :step="settings.sharpness.step" v-model="settings.sharpness.value" />
                   <color-input label="Background" v-model="settings.backgroundColor.value" />
+                  <v-select label="Coloring" v-model="settings.coloring.value" item-text="text" item-value="value" :items="settings.coloring.items" />
+                  <v-slider label="Sharpness" :min="settings.sharpness.min" :max="settings.sharpness.max" :step="settings.sharpness.step" v-model="settings.sharpness.value" />
+                  <v-switch label="Ambient Occlusion" v-model="settings.ambientOcclusion.value" />
+                  <v-switch label="Depth of Field" v-model="settings.depthOfField.value" />
 <!--                  <label>
                   Background Color
                   <input name="backgroundColor" type="color" v-model="state.backgroundColor.value" />

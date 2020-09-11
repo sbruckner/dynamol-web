@@ -23,6 +23,9 @@ import surfaceFragmentShader from './shaders/surface-fs.glsl';
 import shadeFragmentShader from './shaders/shade-fs.glsl';
 import aoSampleFragmentShader from './shaders/aosample-fs.glsl';
 import aoBlurFragmentShader from './shaders/aoblur-fs.glsl';
+import dofBlurFragmentShader from './shaders/dofblur-fs.glsl';
+import dofBlendFragmentShader from './shaders/dofblend-fs.glsl';
+
 import debugFragmentShader from './shaders/debug-fs.glsl';
 
 import {Viewer} from './Viewer'
@@ -38,8 +41,14 @@ export class SphereRenderer {
     private sphereFramebuffer;
     private spawnFramebuffer;
     private surfaceFramebuffer;
+    private shadeFramebuffer;
     private aoBlurFramebuffer;
     private aoFramebuffer;
+    private dofBlurFramebuffer;
+    private dofFramebuffer;
+
+    private colorTexture;
+    private depthRenderbuffer;
 
     private spherePositionTexture;
     private sphereNormalTexture;
@@ -69,6 +78,8 @@ export class SphereRenderer {
     private shadeModel;
     private aoSampleModel;
     private aoBlurModel;
+    private dofBlurModel;
+    private dofBlendModel;
 
     private version;
 
@@ -86,6 +97,9 @@ export class SphereRenderer {
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this.intersectionBuffer);
         gl.bufferData(gl.SHADER_STORAGE_BUFFER, 1920*1280*4*128,gl.DYNAMIC_DRAW);
         gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, this.intersectionBuffer);
+
+        this.colorTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
+        this.depthRenderbuffer = new Renderbuffer(gl, {format: gl.DEPTH_COMPONENT32F, width: this.viewportSize[0], height: this.viewportSize[1]});
             
         this.spherePositionTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
         this.sphereNormalTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
@@ -126,6 +140,17 @@ export class SphereRenderer {
 
         this.surfaceFramebuffer.checkStatus();
 
+        this.shadeFramebuffer = new Framebuffer(gl, {
+            width: this.viewportSize[0],
+            height: this.viewportSize[1],
+            attachments: {
+                [gl.DEPTH_ATTACHMENT]: this.depthRenderbuffer,
+                [gl.COLOR_ATTACHMENT0]: this.colorTexture
+            }
+        });
+
+        this.shadeFramebuffer.checkStatus();
+
         this.aoBlurFramebuffer = new Framebuffer(gl, {
             width: this.viewportSize[0],
             height: this.viewportSize[1],
@@ -145,6 +170,28 @@ export class SphereRenderer {
         });
 
         this.aoFramebuffer.checkStatus();
+
+        this.dofBlurFramebuffer = new Framebuffer(gl, {
+            width: this.viewportSize[0],
+            height: this.viewportSize[1],
+            attachments: {
+                [gl.COLOR_ATTACHMENT0]: this.sphereNormalTexture,
+                [gl.COLOR_ATTACHMENT1]: this.surfaceNormalTexture,
+            }
+        });
+
+        this.dofBlurFramebuffer.checkStatus();        
+
+        this.dofFramebuffer = new Framebuffer(gl, {
+            width: this.viewportSize[0],
+            height: this.viewportSize[1],
+            attachments: {
+                [gl.COLOR_ATTACHMENT0]: this.sphereDiffuseTexture,
+                [gl.COLOR_ATTACHMENT1]: this.surfaceDiffuseTexture,
+            }
+        });
+
+        this.dofFramebuffer.checkStatus();        
 
         this.quadBuffer = new Buffer(gl, new Float32Array([-1.0,-1.0,0.0, 1.0,-1.0,0.0, -1.0,1.0,0.0, 1.0,1.0,0.0]));
         this.quadBuffer.accessor = new Accessor({size :3});
@@ -245,6 +292,26 @@ export class SphereRenderer {
             vertexCount:4
         });
 
+        this.dofBlurModel = new Model(gl,{
+            programManager,
+            defines: shaderDefines,
+            vs: imageVertexShader,
+            fs: dofBlurFragmentShader,
+            attributes: {positions: this.quadBuffer},
+            drawMode: gl.TRIANGLE_STRIP,
+            vertexCount:4
+        });        
+
+        this.dofBlendModel = new Model(gl,{
+            programManager,
+            defines: shaderDefines,
+            vs: imageVertexShader,
+            fs: dofBlendFragmentShader,
+            attributes: {positions: this.quadBuffer},
+            drawMode: gl.TRIANGLE_STRIP,
+            vertexCount:4
+        });
+
         setParameters(gl, {
             clearColor: [0, 0, 0, 1],
             clearDepth: 1,
@@ -272,6 +339,11 @@ export class SphereRenderer {
             this.viewportSize = this.viewer.viewportSize();
             this.sphereFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
             this.surfaceFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
+            this.shadeFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
+            this.aoBlurFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
+            this.aoFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
+            this.dofBlurFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
+            this.dofFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
 
             gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this.offsetBuffer);
             gl.bufferData(gl.SHADER_STORAGE_BUFFER, this.viewportSize[0]*this.viewportSize[1]*4+4,gl.DYNAMIC_DRAW);
@@ -280,11 +352,13 @@ export class SphereRenderer {
 
         const settings = this.viewer.environment.settings;
 
-        const sharpness = settings.sharpness.value;
-        const coloring = settings.coloring.value;
-        const ambientOcclusion = settings.ambientOcclusion.value;
         const bg = settings.backgroundColor.value;
         const backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
+        const sharpness = settings.sharpness.value;
+        const coloring = settings.coloring.value;
+
+        const ambientOcclusion = settings.ambientOcclusion.value;
+        const depthOfField = settings.depthOfField.value;
 
         let shaderDefines:any = { };
 
@@ -293,6 +367,9 @@ export class SphereRenderer {
 
         if (ambientOcclusion)
             shaderDefines.AMBIENT = true;
+
+        if (depthOfField)
+            shaderDefines.DEPTHOFFIELD = true;
 
         this.shadeModel.setProgram({defines:shaderDefines, vs: imageVertexShader, fs: shadeFragmentShader } );
         this.surfaceModel.setProgram({defines:shaderDefines,vs: imageVertexShader, fs: surfaceFragmentShader} );
@@ -320,6 +397,14 @@ export class SphereRenderer {
 
         const projectionScale = viewportSize[1] / Math.abs(2.0 / projectionMatrix[5]);
         const fieldOfView = 2.0 * Math.atan(1.0 / projectionMatrix[5]);
+
+        const focalDistance = 2.0*Math.sqrt(3.0);
+        const maximumCoCRadius = 9.0;
+        const farRadiusRescale = 1.0;
+
+        const fStop = 5.6;
+        const focalLength = 1.0 / (Math.tan(fieldOfView * 0.5) * 2.0);
+        const aparture = focalLength / fStop;
 
         clear(gl, {color: [0, 0, 0, 1]});
 
@@ -441,7 +526,7 @@ export class SphereRenderer {
             this.aoSampleModel.setUniforms({
                 projectionInfo,
                 projectionScale,
-                 viewLightPosition,
+                viewLightPosition,
                 surfaceNormalTexture : this.surfaceNormalTexture
             });
 
@@ -497,11 +582,87 @@ export class SphereRenderer {
             ambientMaterial : [0.1,0.1,0.1],
             specularMaterial : [0.5,0.5,0.5],
             shininess : 32,
-            backgroundColor
+            backgroundColor,
+            maximumCoCRadius,
+            aparture,
+            focalDistance,
+            focalLength
         });
         
         gl.depthMask(true);
-        this.shadeModel.draw();
+
+        if (depthOfField)
+            this.shadeModel.draw({framebuffer:this.shadeFramebuffer});
+        else
+            this.shadeModel.draw();
+
+        //////////////////////////////////////////////////////////////////////////
+        // Depth of field (optional)
+        //////////////////////////////////////////////////////////////////////////
+        if (depthOfField)
+        {
+            //////////////////////////////////////////////////////////////////////////
+            // Depth of field blurring -- horizontal
+            //////////////////////////////////////////////////////////////////////////
+            
+            this.dofBlurModel.setUniforms({
+                maximumCoCRadius,
+                aparture,
+                focalDistance,
+                focalLength,
+                uMaxCoCRadiusPixels :  Math.round(maximumCoCRadius),
+                uNearBlurRadiusPixels : Math.round(maximumCoCRadius),
+                uInvNearBlurRadiusPixels :  1.0 / maximumCoCRadius,
+                horizontal : true,
+                nearTexture : this.colorTexture,
+                blurTexture : this.colorTexture
+            });
+
+            this.dofBlurFramebuffer.bind();      
+            gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
+            this.dofBlurFramebuffer.unbind();    
+            this.dofBlurModel.draw({framebuffer:this.dofBlurFramebuffer});
+            
+            //////////////////////////////////////////////////////////////////////////
+            // Depth of field blurring -- vertical
+            //////////////////////////////////////////////////////////////////////////
+
+            this.dofBlurModel.setUniforms({
+                maximumCoCRadius,
+                aparture,
+                focalDistance,
+                focalLength,
+                uMaxCoCRadiusPixels :  Math.round(maximumCoCRadius),
+                uNearBlurRadiusPixels : Math.round(maximumCoCRadius),
+                uInvNearBlurRadiusPixels :  1.0 / maximumCoCRadius,
+                horizontal : false,
+                nearTexture : this.sphereNormalTexture,
+                blurTexture : this.surfaceNormalTexture
+            });
+
+            this.dofFramebuffer.bind();      
+            gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
+            this.dofFramebuffer.unbind();    
+            this.dofBlurModel.draw({framebuffer:this.dofFramebuffer});
+
+            //////////////////////////////////////////////////////////////////////////
+            // Depth of field blending
+            //////////////////////////////////////////////////////////////////////////
+
+            this.dofBlendModel.setUniforms({
+                maximumCoCRadius,
+                aparture,
+                focalDistance,
+                focalLength,
+                farRadiusRescale,
+                colorTexture: this.colorTexture,
+                nearTexture: this.sphereDiffuseTexture,
+                blurTexture: this.surfaceDiffuseTexture
+            });
+
+            this.dofBlendModel.draw();
+        }
+	        
       
 /*
         this.debugModel.setUniforms({
@@ -513,7 +674,14 @@ export class SphereRenderer {
         gl.memoryBarrier(gl.ALL_BARRIER_BITS);
         this.debugModel.draw();
 */   
-//        blit(this.normalTexture, Framebuffer.getDefaultFramebuffer(gl));
+        //blit(this.shadeFramebuffer, Framebuffer.getDefaultFramebuffer(gl));
+        /*
+        this.shadeFramebuffer.bind({target:gl.READ_FRAMEBUFFER});
+        Framebuffer.getDefaultFramebuffer(gl).bind({target:gl.DRAW_FRAMEBUFFER});
+        gl.blitFramebuffer(0,0,viewportSize[0],viewportSize[1],0,0,viewportSize[0],viewportSize[1], gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+        Framebuffer.getDefaultFramebuffer(gl).unbind();
+        this.shadeFramebuffer.unbind();
+        */
     }
 
     update({gl}) {
