@@ -29,6 +29,9 @@ export const Environment = {
           }
         ]
       },
+      ambientOcclusion : {
+        value: false
+      },
       backgroundColor : {
         value: {
           r:0, g:0, b:255, a:1.0

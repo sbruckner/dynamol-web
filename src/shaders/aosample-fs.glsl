@@ -1,3 +1,5 @@
+#version 310 es
+
 // This is an implementation of Scalable Ambient Obscurance by McGuire et al.
 // It is based on their source code available at the link below, with only slight adaptations.
 // 
@@ -5,15 +7,13 @@
 // Proceedings of ACM SIGGRAPH/Eurographics High-Performance Graphics, pp. 97--103, 2012.
 // http://casual-effects.com/research/McGuire2012SAO/
 
-#version 310 es
-
 // total number of samples at each fragment
 #define PI						3.1415926535897932384626433832795
 #define NUM_SAMPLES				32
 #define NUM_SPIRAL_TURNS		7
 #define VARIATION				1
 
-layout(pixel_center_integer) in vec4 gl_FragCoord;
+/*layout(pixel_center_integer) in vec4 gl_FragCoord;*/
 in vec4 gFragmentPosition;
 out vec4 fragAmbient;
 
@@ -22,9 +22,9 @@ uniform sampler2D surfaceNormalTexture;
 uniform vec4 projectionInfo;
 uniform float projectionScale;
 
-uniform float occlusionRadius = 1.0;
-uniform float occlusionBias = 0.012;
-uniform float occlusionIntensity = 1.0;
+/*uniform */const float occlusionRadius = 1.0;
+/*uniform */const float occlusionBias = 0.012;
+/*uniform */const float occlusionIntensity = 1.0;
 uniform vec3 viewLightPosition;
 
 const float occlusionRadius2 = occlusionRadius * occlusionRadius;
@@ -45,7 +45,7 @@ vec3 getPosition(ivec2 positionSS, out vec3 normal)
 {
 	vec4 value = texelFetch(surfaceNormalTexture,positionSS,0);	
 	normal = value.xyz;
-	return vec3((positionSS * projectionInfo.xy + projectionInfo.zw) * value.w, value.w);
+	return vec3((vec2(positionSS) * projectionInfo.xy + projectionInfo.zw) * value.w, value.w);
 }
 
 vec3 getOffsetPosition(ivec2 positionSS, vec2 unitOffset, float radiusSS, out vec3 normal)
@@ -135,7 +135,7 @@ void main()
 	vec3 normalVS;
 	vec3 positionVS = getPosition(positionSS, normalVS);
   
-	float sampleNoise = rand(positionSS);
+	float sampleNoise = rand(vec2(positionSS));
 	float randomPatternRotationAngle = 2.0 * PI * sampleNoise;
 	//float randomPatternRotationAngle = (3 * positionSS.x ^ positionSS.y + positionSS.x * positionSS.y) * 10;
 

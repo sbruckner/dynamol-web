@@ -57,7 +57,7 @@ vec4 over(vec4 vecF, vec4 vecB)
 
 void main()
 {
-  vec2 fragCoord =(2.0*gl_FragCoord.xy)/viewportSize - vec2(1.0);
+	vec2 fragCoord =(2.0*gl_FragCoord.xy)/viewportSize - vec2(1.0);
 	
 	vec4 near = inverseModelViewProjectionMatrix*vec4(fragCoord.xy,-1.0,1.0);
 	near /= near.w;

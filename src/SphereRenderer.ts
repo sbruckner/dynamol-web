@@ -21,6 +21,8 @@ import spawnFragmentShader from './shaders/spawn-fs.glsl';
 import clearFragmentShader from './shaders/clear-fs.glsl';
 import surfaceFragmentShader from './shaders/surface-fs.glsl';
 import shadeFragmentShader from './shaders/shade-fs.glsl';
+import aoSampleFragmentShader from './shaders/aosample-fs.glsl';
+import aoBlurFragmentShader from './shaders/aoblur-fs.glsl';
 import debugFragmentShader from './shaders/debug-fs.glsl';
 
 import {Viewer} from './Viewer'
@@ -36,6 +38,8 @@ export class SphereRenderer {
     private sphereFramebuffer;
     private spawnFramebuffer;
     private surfaceFramebuffer;
+    private aoBlurFramebuffer;
+    private aoFramebuffer;
 
     private spherePositionTexture;
     private sphereNormalTexture;
@@ -46,6 +50,9 @@ export class SphereRenderer {
     private surfaceNormalTexture;
     private surfaceDiffuseTexture;
     private surfaceDepthRenderbuffer;
+
+    private blurTexture;
+    private ambientTexture;
 
     private elementColorsRadiiBuffer;
     private residueColorsBuffer;
@@ -60,6 +67,8 @@ export class SphereRenderer {
     private debugModel;
     private surfaceModel;
     private shadeModel;
+    private aoSampleModel;
+    private aoBlurModel;
 
     private version;
 
@@ -87,7 +96,9 @@ export class SphereRenderer {
         this.surfaceNormalTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
         this.surfaceDiffuseTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
         this.surfaceDepthRenderbuffer =  new Renderbuffer(gl,{format: gl.DEPTH_COMPONENT32F, width: this.viewportSize[0], height: this.viewportSize[1] });
-
+        
+        this.blurTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
+        this.ambientTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
 
         this.sphereFramebuffer = new Framebuffer(gl, {
             width: this.viewportSize[0],
@@ -96,7 +107,7 @@ export class SphereRenderer {
                 [gl.DEPTH_ATTACHMENT]: this.sphereDepthRenderbuffer,
                 [gl.COLOR_ATTACHMENT0]: this.spherePositionTexture,
                 [gl.COLOR_ATTACHMENT1]: this.sphereNormalTexture
-            },
+            }
         });
 
         this.sphereFramebuffer.checkStatus();
@@ -110,28 +121,37 @@ export class SphereRenderer {
                 [gl.COLOR_ATTACHMENT1]: this.surfaceNormalTexture,
                 [gl.COLOR_ATTACHMENT2]: this.surfaceDiffuseTexture,
                 [gl.COLOR_ATTACHMENT3]: this.sphereDiffuseTexture
-            },
+            }
         });
 
         this.surfaceFramebuffer.checkStatus();
 
-/*
-        this.spawnFramebuffer = new Framebuffer(gl, {
+        this.aoBlurFramebuffer = new Framebuffer(gl, {
             width: this.viewportSize[0],
             height: this.viewportSize[1],
-            color: true
+            attachments: {
+                [gl.COLOR_ATTACHMENT0]: this.blurTexture
+            }
         });
-*/
+
+        this.aoBlurFramebuffer.checkStatus();
+
+        this.aoFramebuffer = new Framebuffer(gl, {
+            width: this.viewportSize[0],
+            height: this.viewportSize[1],
+            attachments: {
+                [gl.COLOR_ATTACHMENT0]: this.ambientTexture
+            }
+        });
+
+        this.aoFramebuffer.checkStatus();
 
         this.quadBuffer = new Buffer(gl, new Float32Array([-1.0,-1.0,0.0, 1.0,-1.0,0.0, -1.0,1.0,0.0, 1.0,1.0,0.0]));
         this.quadBuffer.accessor = new Accessor({size :3});
 
- //        this.quadVertexArray.setAttributes({0:this.quadBuffer});
 
         this.positionBuffer = new Buffer(gl, {byteLength: 256} );//Float32Array.from({length: 2048*3}, () => 16.0*(2.0*Math.random()-1.0)));
         this.positionBuffer.accessor = new Accessor({size :4});
-
-//        this.positionVertexArray.setAttributes({0:this.positionBuffer});
 
         this.elementColorsRadiiBuffer = new Buffer(gl,  elementColorsRadiiArray );
         this.elementColorsRadiiBuffer.bind({target: gl.UNIFORM_BUFFER, index: 0});
@@ -205,6 +225,25 @@ export class SphereRenderer {
             vertexCount:4
         });        
 
+        this.aoSampleModel = new Model(gl,{
+            programManager,
+            defines: shaderDefines,
+            vs: imageVertexShader,
+            fs: aoSampleFragmentShader,
+            attributes: {positions: this.quadBuffer},
+            drawMode: gl.TRIANGLE_STRIP,
+            vertexCount:4
+        });        
+
+        this.aoBlurModel = new Model(gl,{
+            programManager,
+            defines: shaderDefines,
+            vs: imageVertexShader,
+            fs: aoBlurFragmentShader,
+            attributes: {positions: this.quadBuffer},
+            drawMode: gl.TRIANGLE_STRIP,
+            vertexCount:4
+        });
 
         setParameters(gl, {
             clearColor: [0, 0, 0, 1],
@@ -238,7 +277,23 @@ export class SphereRenderer {
             gl.bufferData(gl.SHADER_STORAGE_BUFFER, this.viewportSize[0]*this.viewportSize[1]*4+4,gl.DYNAMIC_DRAW);
         }
 
-        const shaderDefines = {COLORING:true};
+
+        const settings = this.viewer.environment.settings;
+
+        const sharpness = settings.sharpness.value;
+        const coloring = settings.coloring.value;
+        const ambientOcclusion = settings.ambientOcclusion.value;
+        const bg = settings.backgroundColor.value;
+        const backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
+
+        let shaderDefines:any = { };
+
+        if ( coloring > 0)
+            shaderDefines.COLORING = true;
+
+        if (ambientOcclusion)
+            shaderDefines.AMBIENT = true;
+
         this.shadeModel.setProgram({defines:shaderDefines, vs: imageVertexShader, fs: shadeFragmentShader } );
         this.surfaceModel.setProgram({defines:shaderDefines,vs: imageVertexShader, fs: surfaceFragmentShader} );
 
@@ -255,16 +310,19 @@ export class SphereRenderer {
         const inverseModelLightMatrix = new Matrix4(modelLightMatrix).invert();
 
         const worldLightPosition = inverseModelLightMatrix.transformPoint([0,0,0]);
-        //const viewLightPosition = modelViewMatrix * worldLightPosition;
+        const viewLightPosition = modelViewMatrix.transformPoint(worldLightPosition);
+
+        const projectionInfo= [
+            -2.0 / (viewportSize[0] * projectionMatrix[0]),
+		    -2.0 / (viewportSize[1] * projectionMatrix[5]),
+		    (1.0 - projectionMatrix[2]) / projectionMatrix[0],
+		    (1.0 + projectionMatrix[6]) / projectionMatrix[5] ];
+
+        const projectionScale = viewportSize[1] / Math.abs(2.0 / projectionMatrix[5]);
+        const fieldOfView = 2.0 * Math.atan(1.0 / projectionMatrix[5]);
 
         clear(gl, {color: [0, 0, 0, 1]});
 
-        const settings = this.viewer.environment.settings;
-
-        const sharpness = settings.sharpness.value;
-        const coloring = settings.coloring.value;
-        const bg = settings.backgroundColor.value;
-        const backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
 
         const contributingAtoms = 32.0;
         const radiusScale = Math.sqrt(Math.log(contributingAtoms*Math.exp(sharpness)) / sharpness);
@@ -370,6 +428,55 @@ export class SphereRenderer {
         this.surfaceModel.draw({framebuffer:this.surfaceFramebuffer});
 
 
+
+        //////////////////////////////////////////////////////////////////////////
+        // Ambient occlusion (optional)
+        //////////////////////////////////////////////////////////////////////////
+        if (ambientOcclusion)
+        {
+            //////////////////////////////////////////////////////////////////////////
+            // Ambient occlusion sampling
+            //////////////////////////////////////////////////////////////////////////
+
+            this.aoSampleModel.setUniforms({
+                projectionInfo,
+                projectionScale,
+                 viewLightPosition,
+                surfaceNormalTexture : this.surfaceNormalTexture
+            });
+
+            this.aoSampleModel.draw({framebuffer:this.aoFramebuffer});
+
+            //////////////////////////////////////////////////////////////////////////
+            // Ambient occlusion blurring -- horizontal
+            //////////////////////////////////////////////////////////////////////////
+            this.aoBlurModel.setUniforms({
+                normalTexture : this.surfaceNormalTexture,
+                ambientTexture : this.ambientTexture,
+                offset : [1.0/viewportSize[0],0.0],
+                viewportSize
+            });
+
+            this.aoBlurModel.draw({framebuffer:this.aoBlurFramebuffer});
+
+
+            //////////////////////////////////////////////////////////////////////////
+            // Ambient occlusion blurring -- vertical
+            //////////////////////////////////////////////////////////////////////////
+            //m_aoFramebuffer->bind();
+            //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            this.aoBlurModel.setUniforms({
+                normalTexture : this.surfaceNormalTexture,
+                ambientTexture : this.blurTexture,
+                offset : [0.0,1.0/viewportSize[1]],
+                viewportSize
+            });
+
+            this.aoBlurModel.draw({framebuffer:this.aoFramebuffer});
+        }
+        //////////////////////////////////////////////////////////////////////////
+
         this.shadeModel.setUniforms({
             modelViewMatrix,
             projectionMatrix,
@@ -384,6 +491,7 @@ export class SphereRenderer {
             surfacePositionTexture : this.surfacePositionTexture,
             surfaceNormalTexture : this.surfaceNormalTexture,
             surfaceDiffuseTexture : this.surfaceDiffuseTexture,
+            ambientTexture : this.ambientTexture,
             lightPosition : worldLightPosition,
             diffuseMaterial : [0.5,0.5,0.5],
             ambientMaterial : [0.1,0.1,0.1],

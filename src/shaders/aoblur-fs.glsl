@@ -1,3 +1,5 @@
+#version 310 es
+
 // This is an implementation of Scalable Ambient Obscurance by McGuire et al.
 // It is based on their source code available at the link below, with only slight adaptations.
 // 
@@ -5,17 +7,16 @@
 // Proceedings of ACM SIGGRAPH/Eurographics High-Performance Graphics, pp. 97--103, 2012.
 // http://casual-effects.com/research/McGuire2012SAO/
 
-#version 310 es
-
-const float KERNEL_RADIUS = 5;
+const float KERNEL_RADIUS = 5.0;
   
-uniform float sharpness = 32.0;
+/*uniform */const float sharpness = 32.0;
 uniform vec2  offset; // either set x to 1/width or y to 1/height
+uniform vec2 viewportSize;
 
 layout(binding=0) uniform sampler2D normalTexture;
 layout(binding=1) uniform sampler2D ambientTexture;
 
-layout(pixel_center_integer) in vec4 gl_FragCoord;
+/*layout(pixel_center_integer) in vec4 gl_FragCoord;*/
 in vec4 gFragmentPosition;
 out vec4 fragColor;
 
@@ -46,15 +47,16 @@ void main()
   vec4 total = ambient;
   float w_total = 1.0;
 
-  vec2 texCoord = (gFragmentPosition.xy+1.0)*0.5;
+  vec2 texCoord = gl_FragCoord.xy/viewportSize;
+  //vec2 texCoord = (gFragmentPosition.xy+1.0)*0.5;
   
-  for (float r = 1; r <= KERNEL_RADIUS; ++r)
+  for (float r = 1.0; r <= KERNEL_RADIUS; ++r)
   {
     vec2 uv = texCoord + offset * (r+0.5);
     total += BlurFunction(uv, r, normal, w_total);  
   }
   
-  for (float r = 1; r <= KERNEL_RADIUS; ++r)
+  for (float r = 1.0; r <= KERNEL_RADIUS; ++r)
   {
     vec2 uv = texCoord - offset * (r+0.5);
     total += BlurFunction(uv, r, normal, w_total);  
