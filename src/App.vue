@@ -7,7 +7,7 @@
     >
       <v-list>
 
-        <v-list-group prepend-icon="mdi-cog" value="true" dense>
+        <v-list-group value="true" dense>
 
             <template v-slot:activator>
               <v-list-item-title>Settings</v-list-item-title>
@@ -21,6 +21,10 @@
                   <v-slider label="Sharpness" :min="settings.sharpness.min" :max="settings.sharpness.max" :step="settings.sharpness.step" v-model="settings.sharpness.value" />
                   <v-switch label="Ambient Occlusion" v-model="settings.ambientOcclusion.value" />
                   <v-switch label="Depth of Field" v-model="settings.depthOfField.value" />
+                  <v-switch label="Environment Mapping" v-model="settings.environmentMapping.value"/>
+                  <v-switch label="Material Mapping" v-model="settings.materialMapping.value"/>
+                  <v-switch label="Normal Mapping" v-model="settings.normalMapping.value"/>
+
 <!--                  <label>
                   Background Color
                   <input name="backgroundColor" type="color" v-model="state.backgroundColor.value" />
@@ -42,6 +46,39 @@
               </v-list-item-content>
             </v-list-item>
 
+        </v-list-group>
+
+        <v-list-group value="true" dense :hidden="!settings.environmentMapping.value">
+            <template v-slot:activator>
+              <v-list-item-title>Environment Map</v-list-item-title>
+            </template>           
+            <v-list-item>
+              <v-list-item-content>
+                  <vue-select-image :dataImages="settings.environmentMap.items" :selectedImages="[settings.environmentMap.value]" @onselectimage="onSelectEnvironmentMap" />
+              </v-list-item-content>
+            </v-list-item>
+        </v-list-group>
+
+        <v-list-group value="true" dense :hidden="!settings.materialMapping.value">
+            <template v-slot:activator>
+              <v-list-item-title>Material Map</v-list-item-title>
+            </template>           
+            <v-list-item>
+              <v-list-item-content>
+                  <vue-select-image :dataImages="settings.materialMap.items" :selectedImages="[settings.materialMap.value]" @onselectimage="onSelectMaterialMap" />
+              </v-list-item-content>
+            </v-list-item>
+        </v-list-group>
+
+        <v-list-group value="true" dense :hidden="!settings.normalMapping.value">
+            <template v-slot:activator>
+              <v-list-item-title>Normal Map</v-list-item-title>
+            </template>           
+            <v-list-item>
+              <v-list-item-content>
+                  <vue-select-image :dataImages="settings.normalMap.items" :selectedImages="[settings.normalMap.value]" @onselectimage="onSelectNormalMap" />
+              </v-list-item-content>
+            </v-list-item>
         </v-list-group>
 
       </v-list>
@@ -127,6 +164,15 @@
         const newUrl = "http://files.rcsb.org/download/"+value+".pdb";
         if (newUrl != this.data.url)
           this.data.url = newUrl;        
+      },
+      onSelectEnvironmentMap(value) {
+        this.settings.environmentMap.value = value;
+      },
+      onSelectMaterialMap(value) {
+        this.settings.materialMap.value = value;
+      },
+      onSelectNormalMap(value) {
+        this.settings.normalMap.value = value;
       }
     }
   }

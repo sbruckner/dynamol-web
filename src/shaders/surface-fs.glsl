@@ -2,6 +2,7 @@
 
 precision highp float;
 precision highp int;
+
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewProjectionMatrix;
@@ -22,11 +23,11 @@ uniform vec2 focusPosition;
 
 uniform sampler2D positionTexture;
 uniform sampler2D normalTexture;
-/*
+
 uniform sampler2D environmentTexture;
 uniform sampler2D bumpTexture;
 uniform sampler2D materialTexture;
-*/
+
 layout(location = 0) out vec4 surfacePosition;
 layout(location = 1) out vec4 surfaceNormal;
 layout(location = 2) out vec4 surfaceDiffuse;

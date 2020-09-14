@@ -7,6 +7,8 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "@loaders.gl/core": "^2.2.8",
+    "@loaders.gl/images": "^2.2.8",
     "@luma.gl/core": "^8.2.0",
     "@luma.gl/engine": "^8.2.0",
     "@luma.gl/webgl": "^8.2.0",
@@ -16,6 +18,7 @@
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
     "vue-property-decorator": "^8.4.2",
+    "vue-select-image": "^1.9.0",
     "vuetify": "^2.2.11"
   },
   "devDependencies": {

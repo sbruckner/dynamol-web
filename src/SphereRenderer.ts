@@ -13,6 +13,7 @@ import {Protein, elementColorsRadiiArray, residueColorsArray, chainColorsArray} 
 import {Accessor} from '@luma.gl/webgl';
 import {Buffer} from '@luma.gl/webgl';
 import {blit} from '@luma.gl/webgl';
+import {loadImage} from '@loaders.gl/images';
 
 import sphereVertexShader from './shaders/sphere-vs.glsl';
 import imageVertexShader from './shaders/image-vs.glsl';
@@ -80,6 +81,15 @@ export class SphereRenderer {
     private aoBlurModel;
     private dofBlurModel;
     private dofBlendModel;
+
+    private environmentMap;
+    private environmentTexture;
+
+    private materialMap;
+    private materialTexture;
+
+    private normalMap;
+    private normalTexture;
 
     private version;
 
@@ -317,7 +327,7 @@ export class SphereRenderer {
             clearDepth: 1,
             depthTest: true,
             depthFunc: gl.LESS
-        });           
+        });        
     }
 
     display({gl}) {
@@ -349,8 +359,36 @@ export class SphereRenderer {
             gl.bufferData(gl.SHADER_STORAGE_BUFFER, this.viewportSize[0]*this.viewportSize[1]*4+4,gl.DYNAMIC_DRAW);
         }
 
-
         const settings = this.viewer.environment.settings;
+
+        if (this.environmentMap != settings.environmentMap.value)
+        {
+            this.environmentMap = settings.environmentMap.value;
+            this.environmentTexture = new Texture2D(gl, {
+                    data: loadImage(this.environmentMap.src)
+            });
+        }   
+
+        if (this.materialMap != settings.materialMap.value)
+        {
+            this.materialMap = settings.materialMap.value;
+            this.materialTexture = new Texture2D(gl, { 
+                data:loadImage(this.materialMap.src),
+                parameters: {
+                    [gl.TEXTURE_MAG_FILTER]: gl.LINEAR,
+                    [gl.TEXTURE_MIN_FILTER]: gl.LINEAR
+                },
+                mipmaps: false
+            });
+        }   
+
+        if (this.normalMap != settings.normalMap.value)
+        {
+            this.normalMap = settings.normalMap.value;
+            this.normalTexture = new Texture2D(gl, {
+                data: loadImage(this.normalMap.src)
+            });
+        }   
 
         const bg = settings.backgroundColor.value;
         const backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
@@ -359,6 +397,9 @@ export class SphereRenderer {
 
         const ambientOcclusion = settings.ambientOcclusion.value;
         const depthOfField = settings.depthOfField.value;
+        const environmentMapping = settings.environmentMapping.value;
+        const materialMapping = settings.materialMapping.value;
+        const normalMapping = settings.normalMapping.value;
 
         let shaderDefines:any = { };
 
@@ -370,6 +411,15 @@ export class SphereRenderer {
 
         if (depthOfField)
             shaderDefines.DEPTHOFFIELD = true;
+
+        if (environmentMapping)
+            shaderDefines.ENVIRONMENT = true;
+
+        if (materialMapping)
+            shaderDefines.MATERIAL = true;
+
+        if (normalMapping)
+            shaderDefines.NORMAL = true;
 
         this.shadeModel.setProgram({defines:shaderDefines, vs: imageVertexShader, fs: shadeFragmentShader } );
         this.surfaceModel.setProgram({defines:shaderDefines,vs: imageVertexShader, fs: surfaceFragmentShader} );
@@ -494,7 +544,9 @@ export class SphereRenderer {
             ambientMaterial : [0.1,0.1,0.1],
             specularMaterial : [0.5,0.5,0.5],
             shininess : 32,
-            focusPosition : [0,0]
+            focusPosition : [0,0],
+            materialTexture : this.materialTexture,
+            bumpTexture : this.normalTexture
         });
 
         gl.memoryBarrier(gl.ALL_BARRIER_BITS);
@@ -586,7 +638,8 @@ export class SphereRenderer {
             maximumCoCRadius,
             aparture,
             focalDistance,
-            focalLength
+            focalLength,
+            environmentTexture : this.environmentTexture,
         });
         
         gl.depthMask(true);

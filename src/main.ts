@@ -3,9 +3,11 @@ import App from './App.vue'
 import { Viewer } from "./Viewer"
 import vuetify from '@/plugins/vuetify'
 import { Environment } from './Environment'
+import VueSelectImage from 'vue-select-image'
+require('vue-select-image/dist/vue-select-image.css')
 
+Vue.use(VueSelectImage)
 Vue.component('ColorInput', () => import('./components/ColorInput.vue') );
-
 
 var vm = new Vue({
   vuetify,
