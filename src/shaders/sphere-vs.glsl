@@ -8,6 +8,7 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec2 viewportSize;
 uniform float radiusScale;
+uniform float clipRadiusScale;
 
 flat out vec3 gSpherePosition;
 flat out float gSphereRadius;
@@ -31,16 +32,27 @@ layout(std140, binding = 2) uniform chainColorBlock
 
 void main(void)
 {
+    const float nearPlaneZ = -0.5;
+
 	uint sphereId = floatBitsToUint(positions.w);
 	uint elementId = bitfieldExtract(sphereId,0,8);
 	float sphereRadius = elementColorsRadii[elementId].w*radiusScale;
+    float sphereClipRadius = elementColorsRadii[elementId].w*clipRadiusScale;
 
    // if (elements[0].color.r > 0.0)
 //        sphereRadius *= elementColorsRadii[0].w;
 
     vec4 center = modelViewMatrix * vec4(positions.xyz, 1.0);
+
+	vec4 clipSize = modelViewMatrix * vec4( sphereClipRadius, 0.0,0.0,0.0);
+	float clipRadius = length(clipSize);
+
+	if (center.z + clipRadius >= nearPlaneZ)
+		return;
+
     vec4 offset = modelViewMatrix * vec4(sphereRadius,0.0,0.0,0.0);
     float viewRadius = 0.5*length(offset.xyz);
+
 /*    
     float d2 = dot(center,center);
 

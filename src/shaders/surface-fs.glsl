@@ -188,9 +188,9 @@ void main()
             if (currentIndex >= entryCount-1u || intersections[indices[startIndex]].far < intersections[indices[currentIndex]].near)
             {
                 // sphere tracing parameters
-                const uint maximumSteps = 64u; // maximum number of steps
+                const uint maximumSteps = 32u; // maximum number of steps
                 const float eps = 0.0125; // threshold for detected intersection
-                const float omega = 1.0; // over-relaxation factor
+                const float omega = 1.2; // over-relaxation factor
 
                 float s = sharpness*sharpnessFactor;
 

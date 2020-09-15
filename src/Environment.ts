@@ -2,14 +2,21 @@ import { Protein } from './Protein';
 
 export const Environment = {
     settings: {
-      backgroundColor : {
-        value: {
-          r:0, g:0, b:255, a:1.0
-        }
-      },
       sharpness : { 
         value : 1.0,
         min: 0.5,
+        max: 16.0,
+        step: 0.1
+      },
+      distanceBlending : { 
+        value : 0.0,
+        min: 0.0,
+        max: 1.0,
+        step: 1.0/255.0
+      },
+      distanceScale : { 
+        value : 1.0,
+        min: 0.0,
         max: 16.0,
         step: 0.1
       },
@@ -33,6 +40,44 @@ export const Environment = {
             value: 3
           }
         ]
+      },      
+      backgroundColor : {
+        value: {
+          r:0, g:0, b:0, a:1.0
+        }
+      },
+      ambientMaterial : {
+        value: {
+          r:85, g:85, b:85, a:1.0
+        }
+      },
+      diffuseMaterial : {
+        value: {
+          r:170, g:170, b:170, a:1.0
+        }
+      },     
+      specularMaterial : {
+        value: {
+          r:85, g:85, b:85, a:1.0
+        }
+      },
+      shininess : {
+        value : 20.0,
+        min: 1.0,
+        max: 256.0,
+        step: 0.1
+      },     
+      focalDistance : { 
+        value : 2.0*Math.sqrt(3.0),
+        min: 0.5,
+        max: 16.0,
+        step: 0.1
+      },
+      fStop : { 
+        value : 5.6,
+        min: 0.5,
+        max: 16.0,
+        step: 0.1
       },
       ambientOcclusion : {
         value: false

@@ -390,16 +390,25 @@ export class SphereRenderer {
             });
         }   
 
-        const bg = settings.backgroundColor.value;
-        const backgroundColor = [bg.r/255.0,bg.g/255.0,bg.b/255.0];
+        const backgroundColor = [ settings.backgroundColor.value.r/255.0, settings.backgroundColor.value.g/255.0, settings.backgroundColor.value.b/255.0];
         const sharpness = settings.sharpness.value;
+        const distanceBlending = settings.distanceBlending.value;
+        const distanceScale = settings.distanceScale.value;
         const coloring = settings.coloring.value;
+
+        const ambientMaterial = [ settings.ambientMaterial.value.r/255.0, settings.ambientMaterial.value.g/255.0, settings.ambientMaterial.value.b/255.0];
+        const diffuseMaterial = [ settings.diffuseMaterial.value.r/255.0, settings.diffuseMaterial.value.g/255.0, settings.diffuseMaterial.value.b/255.0];
+        const specularMaterial = [ settings.specularMaterial.value.r/255.0, settings.specularMaterial.value.g/255.0, settings.specularMaterial.value.b/255.0];
+        const shininess = settings.shininess.value;
 
         const ambientOcclusion = settings.ambientOcclusion.value;
         const depthOfField = settings.depthOfField.value;
         const environmentMapping = settings.environmentMapping.value;
         const materialMapping = settings.materialMapping.value;
         const normalMapping = settings.normalMapping.value;
+
+        const focalDistance = settings.focalDistance.value;
+        const fStop = settings.fStop.value;
 
         let shaderDefines:any = { };
 
@@ -448,11 +457,9 @@ export class SphereRenderer {
         const projectionScale = viewportSize[1] / Math.abs(2.0 / projectionMatrix[5]);
         const fieldOfView = 2.0 * Math.atan(1.0 / projectionMatrix[5]);
 
-        const focalDistance = 2.0*Math.sqrt(3.0);
         const maximumCoCRadius = 9.0;
         const farRadiusRescale = 1.0;
 
-        const fStop = 5.6;
         const focalLength = 1.0 / (Math.tan(fieldOfView * 0.5) * 2.0);
         const aparture = focalLength / fStop;
 
@@ -491,7 +498,8 @@ export class SphereRenderer {
             modelViewProjectionMatrix,
             inverseModelViewProjectionMatrix,
             viewportSize,
-            radiusScale : 1.0
+            radiusScale : 1.0, 
+            clipRadiusScale : radiusScale
         });
        
         this.sphereFramebuffer.bind();      
@@ -514,7 +522,8 @@ export class SphereRenderer {
             inverseModelViewProjectionMatrix,
             viewportSize,
             positionTexture : this.spherePositionTexture,
-            radiusScale
+            radiusScale,
+            clipRadiusScale : radiusScale
         });
        
         gl.disable(gl.DEPTH_TEST);
@@ -540,10 +549,10 @@ export class SphereRenderer {
             environment : false,
             lens : false,            
             lightPosition : [0,0,0],
-            diffuseMaterial : [0.5,0.5,0.5],
-            ambientMaterial : [0.1,0.1,0.1],
-            specularMaterial : [0.5,0.5,0.5],
-            shininess : 32,
+            diffuseMaterial,
+            ambientMaterial,
+            specularMaterial,
+            shininess,
             focusPosition : [0,0],
             materialTexture : this.materialTexture,
             bumpTexture : this.normalTexture
@@ -628,18 +637,20 @@ export class SphereRenderer {
             surfacePositionTexture : this.surfacePositionTexture,
             surfaceNormalTexture : this.surfaceNormalTexture,
             surfaceDiffuseTexture : this.surfaceDiffuseTexture,
+            environmentTexture : this.environmentTexture,
             ambientTexture : this.ambientTexture,
             lightPosition : worldLightPosition,
-            diffuseMaterial : [0.5,0.5,0.5],
-            ambientMaterial : [0.1,0.1,0.1],
-            specularMaterial : [0.5,0.5,0.5],
-            shininess : 32,
+            diffuseMaterial,
+            ambientMaterial,
+            specularMaterial,
+            shininess,
             backgroundColor,
             maximumCoCRadius,
             aparture,
             focalDistance,
             focalLength,
-            environmentTexture : this.environmentTexture,
+            distanceBlending,
+            distanceScale,
         });
         
         gl.depthMask(true);

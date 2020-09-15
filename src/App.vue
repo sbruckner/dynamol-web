@@ -10,15 +10,16 @@
         <v-list-group value="true" dense>
 
             <template v-slot:activator>
-              <v-list-item-title>Settings</v-list-item-title>
+              <v-list-item-title>General</v-list-item-title>
             </template>
             
             <v-list-item>
               <v-list-item-content>
-                <v-item-group>
-                  <color-input label="Background" v-model="settings.backgroundColor.value" />
-                  <v-select label="Coloring" v-model="settings.coloring.value" item-text="text" item-value="value" :items="settings.coloring.items" />
+                <v-container>
                   <v-slider label="Sharpness" :min="settings.sharpness.min" :max="settings.sharpness.max" :step="settings.sharpness.step" v-model="settings.sharpness.value" />
+                  <v-slider label="Dist. Blending" :min="settings.distanceBlending.min" :max="settings.distanceBlending.max" :step="settings.distanceBlending.step" v-model="settings.distanceBlending.value" />
+                  <v-slider label="Dist. Scale" :min="settings.distanceScale.min" :max="settings.distanceScale.max" :step="settings.distanceScale.step" v-model="settings.distanceScale.value" />
+                  <v-select label="Coloring" v-model="settings.coloring.value" item-text="text" item-value="value" :items="settings.coloring.items" />
                   <v-switch label="Ambient Occlusion" v-model="settings.ambientOcclusion.value" />
                   <v-switch label="Depth of Field" v-model="settings.depthOfField.value" />
                   <v-switch label="Environment Mapping" v-model="settings.environmentMapping.value"/>
@@ -42,10 +43,44 @@
 -->
 
 
-                </v-item-group>
+                </v-container>
               </v-list-item-content>
             </v-list-item>
+        </v-list-group>
 
+        <v-list-group value="true" dense>
+
+            <template v-slot:activator>
+              <v-list-item-title>Lighting</v-list-item-title>
+            </template>
+            
+            <v-list-item>
+              <v-list-item-content>
+                <v-container>
+                  <color-input label="Background" v-model="settings.backgroundColor.value" />
+                  <color-input label="Ambient" v-model="settings.ambientMaterial.value" />
+                  <color-input label="Diffuse" v-model="settings.diffuseMaterial.value" />
+                  <color-input label="Specular" v-model="settings.specularMaterial.value" />
+                  <v-slider label="Shininess" :min="settings.shininess.min" :max="settings.shininess.max" :step="settings.shininess.step" v-model="settings.shininess.value" />
+                </v-container>
+              </v-list-item-content>
+            </v-list-item>
+        </v-list-group>
+
+        <v-list-group value="true" dense :hidden="!settings.depthOfField.value">
+
+            <template v-slot:activator>
+              <v-list-item-title>Depth of Field</v-list-item-title>
+            </template>
+            
+            <v-list-item>
+              <v-list-item-content>
+                <v-container>
+                  <v-slider label="Focal Distance" :min="settings.focalDistance.min" :max="settings.focalDistance.max" :step="settings.focalDistance.step" v-model="settings.focalDistance.value" />
+                  <v-slider label="F-Stop" :min="settings.fStop.min" :max="settings.fStop.max" :step="settings.fStop.step" v-model="settings.fStop.value" />                  
+                </v-container>
+              </v-list-item-content>
+            </v-list-item>
         </v-list-group>
 
         <v-list-group value="true" dense :hidden="!settings.environmentMapping.value">
