@@ -100,7 +100,7 @@ export class Protein {
 
         for await (let str of makeTextFileLineIterator(url)) {
 
-            console.log(str);
+            //console.log(str);
 
             const recordName = str.substr(0,6).trim();
 

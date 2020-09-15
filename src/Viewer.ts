@@ -1,5 +1,5 @@
 import {AnimationLoop} from '@luma.gl/engine';
-import {instrumentGLContext} from '@luma.gl/gltools';
+import {instrumentGLContext,polyfillContext} from '@luma.gl/gltools';
 import {setParameters} from '@luma.gl/gltools';
 import {Vector2, Vector3, Matrix4, radians} from 'math.gl';
 import {SphereRenderer} from './SphereRenderer';
@@ -9,6 +9,7 @@ export class Viewer extends AnimationLoop {
     private mouse;
     private distance;
     private renderers;
+    private enabled;
 
     private viewTransform;
     public environment;    
@@ -26,6 +27,7 @@ export class Viewer extends AnimationLoop {
         this.distance = 2.0*Math.sqrt(3.0);
         this.viewTransform = new Matrix4();
         this.viewTransform.lookAt([0,0,-this.distance],[0,0,0],[0,1,0]);
+        this.enabled = false;
 
         this.initalizeEventHandling(canvas);
         
@@ -155,7 +157,11 @@ export class Viewer extends AnimationLoop {
           this.mouse.lastX = x;
           this.mouse.lastY = y;          
       };
-    
+        canvas.addEventListener('webglcontextlost', e => {
+          this.enabled = false;
+          document.body.innerHTML = "<div style='position: absolute; top: 50%; left: 50%; font-size: 24px; transform: translate(-50%,-50%); -ms-transform: translate(-50%,-50%);'><b>The WebGL context was lost.</b> This might be due to too many instances running in parallel. Try closing the browser and avoid opening the page in multipe tabs or windows at once.</div>";
+        });
+  
         canvas.addEventListener('wheel', e => {
           e.preventDefault();
         });
@@ -216,9 +222,28 @@ export class Viewer extends AnimationLoop {
     
 
     onCreateContext() {
-        let context = instrumentGLContext(this.canvas.getContext('webgl2-compute'));
-        context.isWebGL = function(gl) {return true;};
-        return context;
+/*
+        this.canvas.addEventListener("webglcontextlost", function(event) {
+          event.preventDefault();
+        }, false);
+*/
+ //       this.canvas.addEventListener(
+//          "webglcontextrestored", setupWebGLStateAndResources, false);        
+
+        let computeContext = this.canvas.getContext('webgl2-compute');
+
+        if (computeContext != null) {
+          instrumentGLContext(computeContext);
+          //polyfillContext(computeContext)
+          computeContext.isWebGL = function() {return true;};
+          computeContext.isWebGL2 = function() {return true;};
+          this.enabled = true;
+        }
+        else {
+           document.body.innerHTML = "<div style='position: absolute; top: 50%; left: 50%; font-size: 24px; transform: translate(-50%,-50%); -ms-transform: translate(-50%,-50%);'><b>WebGL 2.0 Compute is not available.</b> Please make sure the following browser flags are set via <i>about://flags/</i> (if the flags are already set, try to close and restart your browser): <br /><br /><li><i>WebGL 2.0 Compute</i> should be set to <i>Enabled</i></li><li><i>Choose ANGLE graphics backend</i> should be set to <i>OpenGL</i></li></div>";
+        }
+
+        return computeContext;
     }
     
     onInitialize({gl}) {
@@ -234,8 +259,15 @@ export class Viewer extends AnimationLoop {
     }
     
     onRender({gl}) {
+      if (!this.enabled)
+        return;
+
       for (const renderer of this.renderers)
         renderer.display({gl});
+    }
+
+    onContextLost(event){
+      event.preventDefault();
     }
 }
 
