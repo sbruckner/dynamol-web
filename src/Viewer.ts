@@ -12,6 +12,7 @@ export class Viewer extends AnimationLoop {
     private enabled;
 
     private viewTransform;
+    private lightTransform;
     public environment;    
 
     constructor(canvas,environment) {
@@ -27,6 +28,8 @@ export class Viewer extends AnimationLoop {
         this.distance = 2.0*Math.sqrt(3.0);
         this.viewTransform = new Matrix4();
         this.viewTransform.lookAt([0,0,-this.distance],[0,0,0],[0,1,0]);
+        this.lightTransform = new Matrix4();
+        this.lightTransform.lookAt([0,0,-2.0*this.distance],[0,0,0],[0,1,0]);
         this.enabled = false;
 
         this.initalizeEventHandling(canvas);
@@ -59,9 +62,14 @@ export class Viewer extends AnimationLoop {
       return new Matrix4(this.viewTransform).multiplyRight(this.modelTransform());
     }
 
+    modelLightTransform() {
+      
+      return new Matrix4(this.lightTransform).multiplyRight(this.modelTransform());
+    }
+
     projectionTransform() {
       const aspect = this.viewportWidth()/this.viewportHeight(); 
-      return new Matrix4().perspective({fov: radians(60), aspect, near: 0.25, far: 1024.0});
+      return new Matrix4().perspective({fov: radians(60), aspect, near: 0.125, far: 32768.0});
     }
 
     modelViewProjectionTransform() {
@@ -115,7 +123,11 @@ export class Viewer extends AnimationLoop {
             let newViewTransform = new Matrix4(this.viewTransform);
             newViewTransform.rotateAxis(angle,transformedAxis); 
 
+            let newLightTransform = new Matrix4(this.lightTransform);
+            newLightTransform.rotateAxis(angle,transformedAxis); 
+
             this.viewTransform = newViewTransform;
+            this.lightTransform = newLightTransform;
           }
 
           if (translating) {
@@ -234,9 +246,12 @@ export class Viewer extends AnimationLoop {
 
         if (computeContext != null) {
           instrumentGLContext(computeContext);
-          //polyfillContext(computeContext)
-          computeContext.isWebGL = function() {return true;};
-          computeContext.isWebGL2 = function() {return true;};
+          polyfillContext(computeContext)
+          //computeContext.isWebGL = function() {return true;};
+          computeContext._version = 2;
+          computeContext.isWebGL2 = function() {
+            return true;
+          };
           this.enabled = true;
         }
         else {

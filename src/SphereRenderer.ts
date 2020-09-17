@@ -105,7 +105,7 @@ export class SphereRenderer {
 
         this.intersectionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this.intersectionBuffer);
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, 1920*1280*4*128,gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, 1920*1080*4*128,gl.DYNAMIC_DRAW);
         gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, this.intersectionBuffer);
 
         this.colorTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
@@ -365,8 +365,20 @@ export class SphereRenderer {
         {
             this.environmentMap = settings.environmentMap.value;
             this.environmentTexture = new Texture2D(gl, {
-                    data: loadImage(this.environmentMap.src)
-            });
+                    data: loadImage(this.environmentMap.src),   
+                    parameters: {
+                        [gl.TEXTURE_MIN_FILTER]: gl.LINEAR_MIPMAP_LINEAR,
+                        [gl.TEXTURE_MAG_FILTER]: gl.LINEAR,
+                        [gl.TEXTURE_WRAP_S]:gl.REPEAT,
+                        [gl.TEXTURE_WRAP_T]:gl.REPEAT,
+                    },
+                    pixelStore: {
+                        [gl.UNPACK_FLIP_Y_WEBGL]: true,
+                    },
+                    mipmaps: true
+                });
+
+
         }   
 
         if (this.materialMap != settings.materialMap.value)
@@ -375,9 +387,14 @@ export class SphereRenderer {
             this.materialTexture = new Texture2D(gl, { 
                 data:loadImage(this.materialMap.src),
                 parameters: {
+                    [gl.TEXTURE_MIN_FILTER]: gl.LINEAR,
                     [gl.TEXTURE_MAG_FILTER]: gl.LINEAR,
-                    [gl.TEXTURE_MIN_FILTER]: gl.LINEAR
+                    [gl.TEXTURE_WRAP_S]:gl.REPEAT,
+                    [gl.TEXTURE_WRAP_T]:gl.REPEAT,
                 },
+                pixelStore: {
+                    [gl.UNPACK_FLIP_Y_WEBGL]: true,
+                },                
                 mipmaps: false
             });
         }   
@@ -386,8 +403,18 @@ export class SphereRenderer {
         {
             this.normalMap = settings.normalMap.value;
             this.normalTexture = new Texture2D(gl, {
-                data: loadImage(this.normalMap.src)
-            });
+                data: loadImage(this.normalMap.src),
+                parameters: {
+                    [gl.TEXTURE_MIN_FILTER]: gl.LINEAR_MIPMAP_LINEAR,
+                    [gl.TEXTURE_MAG_FILTER]: gl.LINEAR,
+                    [gl.TEXTURE_WRAP_S]:gl.REPEAT,
+                    [gl.TEXTURE_WRAP_T]:gl.REPEAT,
+                },
+                pixelStore: {
+                    [gl.UNPACK_FLIP_Y_WEBGL]: true,
+                },                
+                mipmaps: true
+        });
         }   
 
         const backgroundColor = [ settings.backgroundColor.value.r/255.0, settings.backgroundColor.value.g/255.0, settings.backgroundColor.value.b/255.0];
@@ -404,6 +431,7 @@ export class SphereRenderer {
         const ambientOcclusion = settings.ambientOcclusion.value;
         const depthOfField = settings.depthOfField.value;
         const environmentMapping = settings.environmentMapping.value;
+        const environmentLighting = settings.environmentLighting.value;
         const materialMapping = settings.materialMapping.value;
         const normalMapping = settings.normalMapping.value;
 
@@ -424,6 +452,9 @@ export class SphereRenderer {
         if (environmentMapping)
             shaderDefines.ENVIRONMENT = true;
 
+        if (environmentMapping && environmentLighting)
+            shaderDefines.ENVIRONMENTLIGHTING = true;
+    
         if (materialMapping)
             shaderDefines.MATERIAL = true;
 
@@ -442,7 +473,7 @@ export class SphereRenderer {
         const inverseNormalMatrix = new Matrix3(normalMatrix).invert();
         const viewportSize = this.viewportSize;
 
-        const modelLightMatrix = this.viewer.modelViewTransform();
+        const modelLightMatrix = this.viewer.modelLightTransform();
         const inverseModelLightMatrix = new Matrix4(modelLightMatrix).invert();
 
         const worldLightPosition = inverseModelLightMatrix.transformPoint([0,0,0]);

@@ -1,5 +1,5 @@
 <template>
-				<v-text-field v-bind:label="$props.label" readonly v-model="hexColor" hide-details class="ma-0 pa-0">
+				<v-text-field v-bind:label="$props.label" readonly v-model="hexColor">
 					<template v-slot:append>
 						<v-menu v-model="menu" top nudge-bottom="110" nudge-left="21" :close-on-content-click="false">
 							<template v-slot:activator="{ on }">

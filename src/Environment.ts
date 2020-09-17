@@ -88,6 +88,9 @@ export const Environment = {
       environmentMapping : {
         value: false
       },
+      environmentLighting : {
+        value: false
+      },
       materialMapping : {
         value: false
       },
@@ -103,6 +106,10 @@ export const Environment = {
           {
             id: "0",            
             src: "environments/environment0001.png"
+          },
+          {
+            id: "1",            
+            src: "environments/environment0002.jpg"
           }
         ]
       },

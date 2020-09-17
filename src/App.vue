@@ -22,9 +22,10 @@
                   <v-select label="Coloring" v-model="settings.coloring.value" item-text="text" item-value="value" :items="settings.coloring.items" />
                   <v-switch label="Ambient Occlusion" v-model="settings.ambientOcclusion.value" />
                   <v-switch label="Depth of Field" v-model="settings.depthOfField.value" />
-                  <v-switch label="Environment Mapping" v-model="settings.environmentMapping.value"/>
                   <v-switch label="Material Mapping" v-model="settings.materialMapping.value"/>
                   <v-switch label="Normal Mapping" v-model="settings.normalMapping.value"/>
+                  <v-switch label="Environment Mapping" v-model="settings.environmentMapping.value"/>
+                  <v-switch label="Environment Lighting" v-model="settings.environmentLighting.value" :disabled="!settings.environmentMapping.value"/>
 
 <!--                  <label>
                   Background Color
@@ -83,17 +84,6 @@
             </v-list-item>
         </v-list-group>
 
-        <v-list-group value="true" dense :hidden="!settings.environmentMapping.value">
-            <template v-slot:activator>
-              <v-list-item-title>Environment Map</v-list-item-title>
-            </template>           
-            <v-list-item>
-              <v-list-item-content>
-                  <vue-select-image :dataImages="settings.environmentMap.items" :selectedImages="[settings.environmentMap.value]" @onselectimage="onSelectEnvironmentMap" />
-              </v-list-item-content>
-            </v-list-item>
-        </v-list-group>
-
         <v-list-group value="true" dense :hidden="!settings.materialMapping.value">
             <template v-slot:activator>
               <v-list-item-title>Material Map</v-list-item-title>
@@ -112,6 +102,17 @@
             <v-list-item>
               <v-list-item-content>
                   <vue-select-image :dataImages="settings.normalMap.items" :selectedImages="[settings.normalMap.value]" @onselectimage="onSelectNormalMap" />
+              </v-list-item-content>
+            </v-list-item>
+        </v-list-group>
+
+        <v-list-group value="true" dense :hidden="!settings.environmentMapping.value">
+            <template v-slot:activator>
+              <v-list-item-title>Environment Map</v-list-item-title>
+            </template>           
+            <v-list-item>
+              <v-list-item-content>
+                  <vue-select-image :dataImages="settings.environmentMap.items" :selectedImages="[settings.environmentMap.value]" @onselectimage="onSelectEnvironmentMap" />
               </v-list-item-content>
             </v-list-item>
         </v-list-group>
@@ -178,6 +179,8 @@
       pdbLoading : false
     }),
     created () {
+
+        this.data.url = "http://files.rcsb.org/download/6LU7.pdb";
         const url = "https://data.rcsb.org/rest/v1/holdings/current/entry_ids";
         let self = this;
         self.pdbLoading = true;
