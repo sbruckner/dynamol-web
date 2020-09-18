@@ -105,7 +105,7 @@ export class SphereRenderer {
 
         this.intersectionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this.intersectionBuffer);
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, 1920*1080*4*128,gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, 1920*1280*4*128,gl.DYNAMIC_DRAW);
         gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, this.intersectionBuffer);
 
         this.colorTexture = new Texture2D(gl, {format: gl.RGBA32F, width: this.viewportSize[0], height: this.viewportSize[1]});
@@ -354,7 +354,7 @@ export class SphereRenderer {
             this.aoFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
             this.dofBlurFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
             this.dofFramebuffer.resize({width:this.viewportSize[0],height: this.viewportSize[1]});
-
+       
             gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this.offsetBuffer);
             gl.bufferData(gl.SHADER_STORAGE_BUFFER, this.viewportSize[0]*this.viewportSize[1]*4+4,gl.DYNAMIC_DRAW);
         }

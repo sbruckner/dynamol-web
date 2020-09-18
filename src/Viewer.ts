@@ -69,7 +69,7 @@ export class Viewer extends AnimationLoop {
 
     projectionTransform() {
       const aspect = this.viewportWidth()/this.viewportHeight(); 
-      return new Matrix4().perspective({fov: radians(60), aspect, near: 0.125, far: 32768.0});
+      return new Matrix4().perspective({fov: radians(60), aspect, near: 0.25, far: 1024.0});
     }
 
     modelViewProjectionTransform() {
@@ -169,53 +169,55 @@ export class Viewer extends AnimationLoop {
           this.mouse.lastX = x;
           this.mouse.lastY = y;          
       };
-        canvas.addEventListener('webglcontextlost', e => {
-          this.enabled = false;
-          document.body.innerHTML = "<div style='position: absolute; top: 50%; left: 50%; font-size: 24px; transform: translate(-50%,-50%); -ms-transform: translate(-50%,-50%);'><b>The WebGL context was lost.</b> This might be due to too many instances running in parallel. Try closing the browser and avoid opening the page in multipe tabs or windows at once.</div>";
-        });
-  
-        canvas.addEventListener('wheel', e => {
-          e.preventDefault();
-        });
-    
-        canvas.addEventListener('mousedown', e => {
-          let rect = this.canvas.getBoundingClientRect();
-          pointerDown(e.clientX - rect.left, e.clientY - rect.top,e.button);    
-          e.preventDefault();
-        });
-    
-        window.addEventListener('mouseup', e => {
-          let rect = this.canvas.getBoundingClientRect();
-          pointerUp(e.clientX - rect.left, e.clientY - rect.top,e.button);    
-          e.preventDefault();
-        });
-    
-        window.addEventListener('mousemove', e => {
-          let rect = this.canvas.getBoundingClientRect();
-          pointerMove(e.clientX - rect.left, e.clientY - rect.top,);
-          e.preventDefault();
-        });
-    
-        window.addEventListener('contextmenu', e => {
-          e.preventDefault();
-        });
 
-        canvas.addEventListener('touchstart', e => {
-          pointerDown(e.touches[0].clientX, e.touches[0].clientY,0);    
+      canvas.addEventListener('webglcontextlost', e => {
+        e.preventDefault();
+        this.enabled = false;
+        document.body.innerHTML = "<div style='position: absolute; top: 50%; left: 50%; font-size: 24px; transform: translate(-50%,-50%); -ms-transform: translate(-50%,-50%);'><b>The WebGL context was lost.</b> This might be due to too many instances running in parallel. Try closing the browser and avoid opening the page in multipe tabs or windows at once.</div>";
+      });
+
+      canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+      });
+
+      canvas.addEventListener('mousedown', e => {
+        let rect = this.canvas.getBoundingClientRect();
+        pointerDown(e.clientX - rect.left, e.clientY - rect.top,e.button);    
+        e.preventDefault();
+      });
+
+      window.addEventListener('mouseup', e => {
+        let rect = this.canvas.getBoundingClientRect();
+        pointerUp(e.clientX - rect.left, e.clientY - rect.top,e.button);    
+        e.preventDefault();
+      });
+
+      window.addEventListener('mousemove', e => {
+        let rect = this.canvas.getBoundingClientRect();
+        pointerMove(e.clientX - rect.left, e.clientY - rect.top,);
+        e.preventDefault();
+      });
+
+      window.addEventListener('contextmenu', e => {
+        e.preventDefault();
+      });
+
+      canvas.addEventListener('touchstart', e => {
+        pointerDown(e.touches[0].clientX, e.touches[0].clientY,0);    
+        e.preventDefault();
+      });
+
+      canvas.addEventListener('touchmove', e => {
+        pointerMove(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault();
+      });
+
+      canvas.addEventListener('touchend', e => {
+        if (e.touches.length === 0) {
+          pointerUp(e.clientX, e.clientY,e.button);    
           e.preventDefault();
-        });
-    
-        canvas.addEventListener('touchmove', e => {
-          pointerMove(e.touches[0].clientX, e.touches[0].clientY);
-          e.preventDefault();
-        });
-    
-        canvas.addEventListener('touchend', e => {
-          if (e.touches.length === 0) {
-            pointerUp(e.clientX, e.clientY,e.button);    
-            e.preventDefault();
-          }
-        });
+        }
+      });
     }
 
     arcballVector(x, y) {
@@ -234,21 +236,13 @@ export class Viewer extends AnimationLoop {
     
 
     onCreateContext() {
-/*
-        this.canvas.addEventListener("webglcontextlost", function(event) {
-          event.preventDefault();
-        }, false);
-*/
- //       this.canvas.addEventListener(
-//          "webglcontextrestored", setupWebGLStateAndResources, false);        
-
         let computeContext = this.canvas.getContext('webgl2-compute');
 
         if (computeContext != null) {
           instrumentGLContext(computeContext);
-          polyfillContext(computeContext)
-          //computeContext.isWebGL = function() {return true;};
-          computeContext._version = 2;
+          //polyfillContext(computeContext)
+  // for some reason this breaks resize          
+  //        computeContext._version = 2;
           computeContext.isWebGL2 = function() {
             return true;
           };
@@ -279,10 +273,6 @@ export class Viewer extends AnimationLoop {
 
       for (const renderer of this.renderers)
         renderer.display({gl});
-    }
-
-    onContextLost(event){
-      event.preventDefault();
     }
 }
 
